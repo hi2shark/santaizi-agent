@@ -21,9 +21,6 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	SantaiziService_ReportSystemState_FullMethodName = "/proto.SantaiziService/ReportSystemState"
 	SantaiziService_ReportSystemInfo_FullMethodName  = "/proto.SantaiziService/ReportSystemInfo"
-	SantaiziService_ReportTask_FullMethodName        = "/proto.SantaiziService/ReportTask"
-	SantaiziService_RequestTask_FullMethodName       = "/proto.SantaiziService/RequestTask"
-	SantaiziService_IOStream_FullMethodName          = "/proto.SantaiziService/IOStream"
 	SantaiziService_LookupGeoIP_FullMethodName       = "/proto.SantaiziService/LookupGeoIP"
 )
 
@@ -33,9 +30,6 @@ const (
 type SantaiziServiceClient interface {
 	ReportSystemState(ctx context.Context, in *State, opts ...grpc.CallOption) (*Receipt, error)
 	ReportSystemInfo(ctx context.Context, in *Host, opts ...grpc.CallOption) (*Receipt, error)
-	ReportTask(ctx context.Context, in *TaskResult, opts ...grpc.CallOption) (*Receipt, error)
-	RequestTask(ctx context.Context, in *Host, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Task], error)
-	IOStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[IOStreamData, IOStreamData], error)
 	LookupGeoIP(ctx context.Context, in *GeoIP, opts ...grpc.CallOption) (*GeoIP, error)
 }
 
@@ -67,48 +61,6 @@ func (c *santaiziServiceClient) ReportSystemInfo(ctx context.Context, in *Host, 
 	return out, nil
 }
 
-func (c *santaiziServiceClient) ReportTask(ctx context.Context, in *TaskResult, opts ...grpc.CallOption) (*Receipt, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Receipt)
-	err := c.cc.Invoke(ctx, SantaiziService_ReportTask_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *santaiziServiceClient) RequestTask(ctx context.Context, in *Host, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Task], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SantaiziService_ServiceDesc.Streams[0], SantaiziService_RequestTask_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[Host, Task]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SantaiziService_RequestTaskClient = grpc.ServerStreamingClient[Task]
-
-func (c *santaiziServiceClient) IOStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[IOStreamData, IOStreamData], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SantaiziService_ServiceDesc.Streams[1], SantaiziService_IOStream_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[IOStreamData, IOStreamData]{ClientStream: stream}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SantaiziService_IOStreamClient = grpc.BidiStreamingClient[IOStreamData, IOStreamData]
-
 func (c *santaiziServiceClient) LookupGeoIP(ctx context.Context, in *GeoIP, opts ...grpc.CallOption) (*GeoIP, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GeoIP)
@@ -125,9 +77,6 @@ func (c *santaiziServiceClient) LookupGeoIP(ctx context.Context, in *GeoIP, opts
 type SantaiziServiceServer interface {
 	ReportSystemState(context.Context, *State) (*Receipt, error)
 	ReportSystemInfo(context.Context, *Host) (*Receipt, error)
-	ReportTask(context.Context, *TaskResult) (*Receipt, error)
-	RequestTask(*Host, grpc.ServerStreamingServer[Task]) error
-	IOStream(grpc.BidiStreamingServer[IOStreamData, IOStreamData]) error
 	LookupGeoIP(context.Context, *GeoIP) (*GeoIP, error)
 	mustEmbedUnimplementedSantaiziServiceServer()
 }
@@ -144,15 +93,6 @@ func (UnimplementedSantaiziServiceServer) ReportSystemState(context.Context, *St
 }
 func (UnimplementedSantaiziServiceServer) ReportSystemInfo(context.Context, *Host) (*Receipt, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReportSystemInfo not implemented")
-}
-func (UnimplementedSantaiziServiceServer) ReportTask(context.Context, *TaskResult) (*Receipt, error) {
-	return nil, status.Error(codes.Unimplemented, "method ReportTask not implemented")
-}
-func (UnimplementedSantaiziServiceServer) RequestTask(*Host, grpc.ServerStreamingServer[Task]) error {
-	return status.Error(codes.Unimplemented, "method RequestTask not implemented")
-}
-func (UnimplementedSantaiziServiceServer) IOStream(grpc.BidiStreamingServer[IOStreamData, IOStreamData]) error {
-	return status.Error(codes.Unimplemented, "method IOStream not implemented")
 }
 func (UnimplementedSantaiziServiceServer) LookupGeoIP(context.Context, *GeoIP) (*GeoIP, error) {
 	return nil, status.Error(codes.Unimplemented, "method LookupGeoIP not implemented")
@@ -214,42 +154,6 @@ func _SantaiziService_ReportSystemInfo_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SantaiziService_ReportTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TaskResult)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SantaiziServiceServer).ReportTask(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SantaiziService_ReportTask_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SantaiziServiceServer).ReportTask(ctx, req.(*TaskResult))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SantaiziService_RequestTask_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Host)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(SantaiziServiceServer).RequestTask(m, &grpc.GenericServerStream[Host, Task]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SantaiziService_RequestTaskServer = grpc.ServerStreamingServer[Task]
-
-func _SantaiziService_IOStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(SantaiziServiceServer).IOStream(&grpc.GenericServerStream[IOStreamData, IOStreamData]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SantaiziService_IOStreamServer = grpc.BidiStreamingServer[IOStreamData, IOStreamData]
-
 func _SantaiziService_LookupGeoIP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GeoIP)
 	if err := dec(in); err != nil {
@@ -284,23 +188,568 @@ var SantaiziService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SantaiziService_ReportSystemInfo_Handler,
 		},
 		{
-			MethodName: "ReportTask",
-			Handler:    _SantaiziService_ReportTask_Handler,
-		},
-		{
 			MethodName: "LookupGeoIP",
 			Handler:    _SantaiziService_LookupGeoIP_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/santaizi.proto",
+}
+
+const (
+	SantaiziTelemetryService_Ingest_FullMethodName = "/proto.SantaiziTelemetryService/Ingest"
+)
+
+// SantaiziTelemetryServiceClient is the client API for SantaiziTelemetryService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SantaiziTelemetryServiceClient interface {
+	Ingest(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[TelemetryRequest, TelemetryResponse], error)
+}
+
+type santaiziTelemetryServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSantaiziTelemetryServiceClient(cc grpc.ClientConnInterface) SantaiziTelemetryServiceClient {
+	return &santaiziTelemetryServiceClient{cc}
+}
+
+func (c *santaiziTelemetryServiceClient) Ingest(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[TelemetryRequest, TelemetryResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SantaiziTelemetryService_ServiceDesc.Streams[0], SantaiziTelemetryService_Ingest_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[TelemetryRequest, TelemetryResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziTelemetryService_IngestClient = grpc.BidiStreamingClient[TelemetryRequest, TelemetryResponse]
+
+// SantaiziTelemetryServiceServer is the server API for SantaiziTelemetryService service.
+// All implementations must embed UnimplementedSantaiziTelemetryServiceServer
+// for forward compatibility.
+type SantaiziTelemetryServiceServer interface {
+	Ingest(grpc.BidiStreamingServer[TelemetryRequest, TelemetryResponse]) error
+	mustEmbedUnimplementedSantaiziTelemetryServiceServer()
+}
+
+// UnimplementedSantaiziTelemetryServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSantaiziTelemetryServiceServer struct{}
+
+func (UnimplementedSantaiziTelemetryServiceServer) Ingest(grpc.BidiStreamingServer[TelemetryRequest, TelemetryResponse]) error {
+	return status.Error(codes.Unimplemented, "method Ingest not implemented")
+}
+func (UnimplementedSantaiziTelemetryServiceServer) mustEmbedUnimplementedSantaiziTelemetryServiceServer() {
+}
+func (UnimplementedSantaiziTelemetryServiceServer) testEmbeddedByValue() {}
+
+// UnsafeSantaiziTelemetryServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SantaiziTelemetryServiceServer will
+// result in compilation errors.
+type UnsafeSantaiziTelemetryServiceServer interface {
+	mustEmbedUnimplementedSantaiziTelemetryServiceServer()
+}
+
+func RegisterSantaiziTelemetryServiceServer(s grpc.ServiceRegistrar, srv SantaiziTelemetryServiceServer) {
+	// If the following call panics, it indicates UnimplementedSantaiziTelemetryServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SantaiziTelemetryService_ServiceDesc, srv)
+}
+
+func _SantaiziTelemetryService_Ingest_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SantaiziTelemetryServiceServer).Ingest(&grpc.GenericServerStream[TelemetryRequest, TelemetryResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziTelemetryService_IngestServer = grpc.BidiStreamingServer[TelemetryRequest, TelemetryResponse]
+
+// SantaiziTelemetryService_ServiceDesc is the grpc.ServiceDesc for SantaiziTelemetryService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SantaiziTelemetryService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.SantaiziTelemetryService",
+	HandlerType: (*SantaiziTelemetryServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "RequestTask",
-			Handler:       _SantaiziService_RequestTask_Handler,
+			StreamName:    "Ingest",
+			Handler:       _SantaiziTelemetryService_Ingest_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "proto/santaizi.proto",
+}
+
+const (
+	SantaiziControlService_Control_FullMethodName = "/proto.SantaiziControlService/Control"
+)
+
+// SantaiziControlServiceClient is the client API for SantaiziControlService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SantaiziControlServiceClient interface {
+	Control(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentControlRequest, PrimaryControlResponse], error)
+}
+
+type santaiziControlServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSantaiziControlServiceClient(cc grpc.ClientConnInterface) SantaiziControlServiceClient {
+	return &santaiziControlServiceClient{cc}
+}
+
+func (c *santaiziControlServiceClient) Control(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentControlRequest, PrimaryControlResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SantaiziControlService_ServiceDesc.Streams[0], SantaiziControlService_Control_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[AgentControlRequest, PrimaryControlResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziControlService_ControlClient = grpc.BidiStreamingClient[AgentControlRequest, PrimaryControlResponse]
+
+// SantaiziControlServiceServer is the server API for SantaiziControlService service.
+// All implementations must embed UnimplementedSantaiziControlServiceServer
+// for forward compatibility.
+type SantaiziControlServiceServer interface {
+	Control(grpc.BidiStreamingServer[AgentControlRequest, PrimaryControlResponse]) error
+	mustEmbedUnimplementedSantaiziControlServiceServer()
+}
+
+// UnimplementedSantaiziControlServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSantaiziControlServiceServer struct{}
+
+func (UnimplementedSantaiziControlServiceServer) Control(grpc.BidiStreamingServer[AgentControlRequest, PrimaryControlResponse]) error {
+	return status.Error(codes.Unimplemented, "method Control not implemented")
+}
+func (UnimplementedSantaiziControlServiceServer) mustEmbedUnimplementedSantaiziControlServiceServer() {
+}
+func (UnimplementedSantaiziControlServiceServer) testEmbeddedByValue() {}
+
+// UnsafeSantaiziControlServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SantaiziControlServiceServer will
+// result in compilation errors.
+type UnsafeSantaiziControlServiceServer interface {
+	mustEmbedUnimplementedSantaiziControlServiceServer()
+}
+
+func RegisterSantaiziControlServiceServer(s grpc.ServiceRegistrar, srv SantaiziControlServiceServer) {
+	// If the following call panics, it indicates UnimplementedSantaiziControlServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SantaiziControlService_ServiceDesc, srv)
+}
+
+func _SantaiziControlService_Control_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SantaiziControlServiceServer).Control(&grpc.GenericServerStream[AgentControlRequest, PrimaryControlResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziControlService_ControlServer = grpc.BidiStreamingServer[AgentControlRequest, PrimaryControlResponse]
+
+// SantaiziControlService_ServiceDesc is the grpc.ServiceDesc for SantaiziControlService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SantaiziControlService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.SantaiziControlService",
+	HandlerType: (*SantaiziControlServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Control",
+			Handler:       _SantaiziControlService_Control_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "proto/santaizi.proto",
+}
+
+const (
+	SantaiziNATService_NATStream_FullMethodName = "/proto.SantaiziNATService/NATStream"
+)
+
+// SantaiziNATServiceClient is the client API for SantaiziNATService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SantaiziNATServiceClient interface {
+	NATStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[NATFrame, NATFrame], error)
+}
+
+type santaiziNATServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSantaiziNATServiceClient(cc grpc.ClientConnInterface) SantaiziNATServiceClient {
+	return &santaiziNATServiceClient{cc}
+}
+
+func (c *santaiziNATServiceClient) NATStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[NATFrame, NATFrame], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SantaiziNATService_ServiceDesc.Streams[0], SantaiziNATService_NATStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[NATFrame, NATFrame]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziNATService_NATStreamClient = grpc.BidiStreamingClient[NATFrame, NATFrame]
+
+// SantaiziNATServiceServer is the server API for SantaiziNATService service.
+// All implementations must embed UnimplementedSantaiziNATServiceServer
+// for forward compatibility.
+type SantaiziNATServiceServer interface {
+	NATStream(grpc.BidiStreamingServer[NATFrame, NATFrame]) error
+	mustEmbedUnimplementedSantaiziNATServiceServer()
+}
+
+// UnimplementedSantaiziNATServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSantaiziNATServiceServer struct{}
+
+func (UnimplementedSantaiziNATServiceServer) NATStream(grpc.BidiStreamingServer[NATFrame, NATFrame]) error {
+	return status.Error(codes.Unimplemented, "method NATStream not implemented")
+}
+func (UnimplementedSantaiziNATServiceServer) mustEmbedUnimplementedSantaiziNATServiceServer() {}
+func (UnimplementedSantaiziNATServiceServer) testEmbeddedByValue()                            {}
+
+// UnsafeSantaiziNATServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SantaiziNATServiceServer will
+// result in compilation errors.
+type UnsafeSantaiziNATServiceServer interface {
+	mustEmbedUnimplementedSantaiziNATServiceServer()
+}
+
+func RegisterSantaiziNATServiceServer(s grpc.ServiceRegistrar, srv SantaiziNATServiceServer) {
+	// If the following call panics, it indicates UnimplementedSantaiziNATServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SantaiziNATService_ServiceDesc, srv)
+}
+
+func _SantaiziNATService_NATStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SantaiziNATServiceServer).NATStream(&grpc.GenericServerStream[NATFrame, NATFrame]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziNATService_NATStreamServer = grpc.BidiStreamingServer[NATFrame, NATFrame]
+
+// SantaiziNATService_ServiceDesc is the grpc.ServiceDesc for SantaiziNATService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SantaiziNATService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.SantaiziNATService",
+	HandlerType: (*SantaiziNATServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "NATStream",
+			Handler:       _SantaiziNATService_NATStream_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "proto/santaizi.proto",
+}
+
+const (
+	SantaiziReplicationService_Replicate_FullMethodName = "/proto.SantaiziReplicationService/Replicate"
+)
+
+// SantaiziReplicationServiceClient is the client API for SantaiziReplicationService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SantaiziReplicationServiceClient interface {
+	Replicate(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ReplicationBatch, ReplicationAck], error)
+}
+
+type santaiziReplicationServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSantaiziReplicationServiceClient(cc grpc.ClientConnInterface) SantaiziReplicationServiceClient {
+	return &santaiziReplicationServiceClient{cc}
+}
+
+func (c *santaiziReplicationServiceClient) Replicate(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ReplicationBatch, ReplicationAck], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SantaiziReplicationService_ServiceDesc.Streams[0], SantaiziReplicationService_Replicate_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ReplicationBatch, ReplicationAck]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziReplicationService_ReplicateClient = grpc.BidiStreamingClient[ReplicationBatch, ReplicationAck]
+
+// SantaiziReplicationServiceServer is the server API for SantaiziReplicationService service.
+// All implementations must embed UnimplementedSantaiziReplicationServiceServer
+// for forward compatibility.
+type SantaiziReplicationServiceServer interface {
+	Replicate(grpc.BidiStreamingServer[ReplicationBatch, ReplicationAck]) error
+	mustEmbedUnimplementedSantaiziReplicationServiceServer()
+}
+
+// UnimplementedSantaiziReplicationServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSantaiziReplicationServiceServer struct{}
+
+func (UnimplementedSantaiziReplicationServiceServer) Replicate(grpc.BidiStreamingServer[ReplicationBatch, ReplicationAck]) error {
+	return status.Error(codes.Unimplemented, "method Replicate not implemented")
+}
+func (UnimplementedSantaiziReplicationServiceServer) mustEmbedUnimplementedSantaiziReplicationServiceServer() {
+}
+func (UnimplementedSantaiziReplicationServiceServer) testEmbeddedByValue() {}
+
+// UnsafeSantaiziReplicationServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SantaiziReplicationServiceServer will
+// result in compilation errors.
+type UnsafeSantaiziReplicationServiceServer interface {
+	mustEmbedUnimplementedSantaiziReplicationServiceServer()
+}
+
+func RegisterSantaiziReplicationServiceServer(s grpc.ServiceRegistrar, srv SantaiziReplicationServiceServer) {
+	// If the following call panics, it indicates UnimplementedSantaiziReplicationServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SantaiziReplicationService_ServiceDesc, srv)
+}
+
+func _SantaiziReplicationService_Replicate_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SantaiziReplicationServiceServer).Replicate(&grpc.GenericServerStream[ReplicationBatch, ReplicationAck]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziReplicationService_ReplicateServer = grpc.BidiStreamingServer[ReplicationBatch, ReplicationAck]
+
+// SantaiziReplicationService_ServiceDesc is the grpc.ServiceDesc for SantaiziReplicationService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SantaiziReplicationService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.SantaiziReplicationService",
+	HandlerType: (*SantaiziReplicationServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Replicate",
+			Handler:       _SantaiziReplicationService_Replicate_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "proto/santaizi.proto",
+}
+
+const (
+	SantaiziCollectorService_Register_FullMethodName  = "/proto.SantaiziCollectorService/Register"
+	SantaiziCollectorService_Sync_FullMethodName      = "/proto.SantaiziCollectorService/Sync"
+	SantaiziCollectorService_GetStatus_FullMethodName = "/proto.SantaiziCollectorService/GetStatus"
+)
+
+// SantaiziCollectorServiceClient is the client API for SantaiziCollectorService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SantaiziCollectorServiceClient interface {
+	Register(ctx context.Context, in *RegisterCollectorRequest, opts ...grpc.CallOption) (*RegisterCollectorResponse, error)
+	Sync(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[CollectorSyncRequest, CollectorSyncResponse], error)
+	GetStatus(ctx context.Context, in *CollectorStatusRequest, opts ...grpc.CallOption) (*CollectorStatus, error)
+}
+
+type santaiziCollectorServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSantaiziCollectorServiceClient(cc grpc.ClientConnInterface) SantaiziCollectorServiceClient {
+	return &santaiziCollectorServiceClient{cc}
+}
+
+func (c *santaiziCollectorServiceClient) Register(ctx context.Context, in *RegisterCollectorRequest, opts ...grpc.CallOption) (*RegisterCollectorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterCollectorResponse)
+	err := c.cc.Invoke(ctx, SantaiziCollectorService_Register_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *santaiziCollectorServiceClient) Sync(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[CollectorSyncRequest, CollectorSyncResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SantaiziCollectorService_ServiceDesc.Streams[0], SantaiziCollectorService_Sync_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[CollectorSyncRequest, CollectorSyncResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziCollectorService_SyncClient = grpc.BidiStreamingClient[CollectorSyncRequest, CollectorSyncResponse]
+
+func (c *santaiziCollectorServiceClient) GetStatus(ctx context.Context, in *CollectorStatusRequest, opts ...grpc.CallOption) (*CollectorStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CollectorStatus)
+	err := c.cc.Invoke(ctx, SantaiziCollectorService_GetStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SantaiziCollectorServiceServer is the server API for SantaiziCollectorService service.
+// All implementations must embed UnimplementedSantaiziCollectorServiceServer
+// for forward compatibility.
+type SantaiziCollectorServiceServer interface {
+	Register(context.Context, *RegisterCollectorRequest) (*RegisterCollectorResponse, error)
+	Sync(grpc.BidiStreamingServer[CollectorSyncRequest, CollectorSyncResponse]) error
+	GetStatus(context.Context, *CollectorStatusRequest) (*CollectorStatus, error)
+	mustEmbedUnimplementedSantaiziCollectorServiceServer()
+}
+
+// UnimplementedSantaiziCollectorServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSantaiziCollectorServiceServer struct{}
+
+func (UnimplementedSantaiziCollectorServiceServer) Register(context.Context, *RegisterCollectorRequest) (*RegisterCollectorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedSantaiziCollectorServiceServer) Sync(grpc.BidiStreamingServer[CollectorSyncRequest, CollectorSyncResponse]) error {
+	return status.Error(codes.Unimplemented, "method Sync not implemented")
+}
+func (UnimplementedSantaiziCollectorServiceServer) GetStatus(context.Context, *CollectorStatusRequest) (*CollectorStatus, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedSantaiziCollectorServiceServer) mustEmbedUnimplementedSantaiziCollectorServiceServer() {
+}
+func (UnimplementedSantaiziCollectorServiceServer) testEmbeddedByValue() {}
+
+// UnsafeSantaiziCollectorServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SantaiziCollectorServiceServer will
+// result in compilation errors.
+type UnsafeSantaiziCollectorServiceServer interface {
+	mustEmbedUnimplementedSantaiziCollectorServiceServer()
+}
+
+func RegisterSantaiziCollectorServiceServer(s grpc.ServiceRegistrar, srv SantaiziCollectorServiceServer) {
+	// If the following call panics, it indicates UnimplementedSantaiziCollectorServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SantaiziCollectorService_ServiceDesc, srv)
+}
+
+func _SantaiziCollectorService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterCollectorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SantaiziCollectorServiceServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SantaiziCollectorService_Register_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SantaiziCollectorServiceServer).Register(ctx, req.(*RegisterCollectorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SantaiziCollectorService_Sync_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SantaiziCollectorServiceServer).Sync(&grpc.GenericServerStream[CollectorSyncRequest, CollectorSyncResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SantaiziCollectorService_SyncServer = grpc.BidiStreamingServer[CollectorSyncRequest, CollectorSyncResponse]
+
+func _SantaiziCollectorService_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CollectorStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SantaiziCollectorServiceServer).GetStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SantaiziCollectorService_GetStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SantaiziCollectorServiceServer).GetStatus(ctx, req.(*CollectorStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// SantaiziCollectorService_ServiceDesc is the grpc.ServiceDesc for SantaiziCollectorService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SantaiziCollectorService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.SantaiziCollectorService",
+	HandlerType: (*SantaiziCollectorServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Register",
+			Handler:    _SantaiziCollectorService_Register_Handler,
 		},
 		{
-			StreamName:    "IOStream",
-			Handler:       _SantaiziService_IOStream_Handler,
+			MethodName: "GetStatus",
+			Handler:    _SantaiziCollectorService_GetStatus_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Sync",
+			Handler:       _SantaiziCollectorService_Sync_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
