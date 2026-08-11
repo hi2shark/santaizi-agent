@@ -132,8 +132,8 @@ func editAgentConfig(cmd *cobra.Command, args []string) {
 		agentConfig.DNS = []string{}
 	}
 
-	agentConfig.GPU = answers.GPU
-	agentConfig.Temperature = answers.Temperature
+	agentConfig.Capabilities.GPU = answers.GPU
+	agentConfig.Capabilities.Temperature = answers.Temperature
 	agentConfig.Debug = answers.Debug
 
 	if err = agentConfig.Save(); err != nil {

@@ -41,6 +41,19 @@ var (
 		"noname",
 	}
 	agentConfig *model.AgentConfig
+
+	hostInfoFn           = host.Info
+	cpuInfoFn            = cpu.Info
+	cpuPercentFn         = cpu.Percent
+	virtualMemoryFn      = mem.VirtualMemory
+	swapMemoryFn         = mem.SwapMemory
+	loadAverageFn        = load.Avg
+	processIDsFn         = process.Pids
+	diskPartitionsFn     = disk.Partitions
+	diskUsageFn          = disk.Usage
+	networkCountersFn    = net.IOCounters
+	networkConnectionsFn = net.Connections
+	sensorTemperaturesFn = sensors.SensorsTemperatures
 )
 
 var (
@@ -77,28 +90,32 @@ func InitConfig(cfg *model.AgentConfig) {
 // GetHost 获取主机硬件信息
 func GetHost() *model.Host {
 	var ret model.Host
+	caps := agentConfig.Capabilities
 
 	var cpuType string
-	hi, err := host.Info()
+	hi, err := hostInfoFn()
 	if err != nil {
 		printf("host.Info error: %v", err)
 	} else {
-		if hi.VirtualizationRole == "guest" {
-			cpuType = "Virtual"
-			ret.Virtualization = hi.VirtualizationSystem
-		} else {
-			cpuType = "Physical"
-			ret.Virtualization = ""
-		}
-		ret.Platform = hi.Platform
-		ret.PlatformVersion = hi.PlatformVersion
-		ret.Arch = hi.KernelArch
+		cachedBootTime = time.Unix(int64(hi.BootTime), 0)
 		ret.BootTime = hi.BootTime
+		if caps.HostInfo {
+			if hi.VirtualizationRole == "guest" {
+				cpuType = "Virtual"
+				ret.Virtualization = hi.VirtualizationSystem
+			} else {
+				cpuType = "Physical"
+				ret.Virtualization = ""
+			}
+			ret.Platform = hi.Platform
+			ret.PlatformVersion = hi.PlatformVersion
+			ret.Arch = hi.KernelArch
+		}
 	}
 
 	cpuModelCount := make(map[string]int)
-	if hostDataFetchAttempts["CPU"] < maxDeviceDataFetchAttempts {
-		ci, err := cpu.Info()
+	if caps.HostInfo && caps.CPU && hostDataFetchAttempts["CPU"] < maxDeviceDataFetchAttempts {
+		ci, err := cpuInfoFn()
 		if err != nil {
 			hostDataFetchAttempts["CPU"]++
 			printf("cpu.Info error: %v, attempt: %d", err, hostDataFetchAttempts["CPU"])
@@ -117,7 +134,7 @@ func GetHost() *model.Host {
 		}
 	}
 
-	if agentConfig.GPU {
+	if caps.HostInfo && caps.GPU {
 		if hostDataFetchAttempts["GPU"] < maxDeviceDataFetchAttempts {
 			ret.GPU, err = gpu.GetGPUModel()
 			if err != nil {
@@ -129,40 +146,45 @@ func GetHost() *model.Host {
 		}
 	}
 
-	ret.DiskTotal, _ = getDiskTotalAndUsed()
-
-	mv, err := mem.VirtualMemory()
-	if err != nil {
-		printf("mem.VirtualMemory error: %v", err)
-	} else {
-		ret.MemTotal = mv.Total
-		if runtime.GOOS != "windows" {
-			ret.SwapTotal = mv.SwapTotal
-		}
+	if caps.HostInfo && caps.Disk {
+		ret.DiskTotal, _ = getDiskTotalAndUsed()
 	}
 
-	if runtime.GOOS == "windows" {
-		ms, err := mem.SwapMemory()
+	if caps.HostInfo && caps.Memory {
+		mv, err := virtualMemoryFn()
 		if err != nil {
-			printf("mem.SwapMemory error: %v", err)
+			printf("mem.VirtualMemory error: %v", err)
 		} else {
-			ret.SwapTotal = ms.Total
+			ret.MemTotal = mv.Total
+			if runtime.GOOS != "windows" {
+				ret.SwapTotal = mv.SwapTotal
+			}
+		}
+
+		if runtime.GOOS == "windows" {
+			ms, err := swapMemoryFn()
+			if err != nil {
+				printf("mem.SwapMemory error: %v", err)
+			} else {
+				ret.SwapTotal = ms.Total
+			}
 		}
 	}
 
-	cachedBootTime = time.Unix(int64(hi.BootTime), 0)
-
-	ret.IP = CachedIP
+	if caps.IPReport {
+		ret.IP = CachedIP
+	}
 	ret.Version = Version
 
 	return &ret
 }
 
-func GetState(skipConnectionCount bool, skipProcsCount bool) *model.HostState {
+func GetState() *model.HostState {
 	var ret model.HostState
+	caps := agentConfig.Capabilities
 
-	if statDataFetchAttempts["CPU"] < maxDeviceDataFetchAttempts {
-		cp, err := cpu.Percent(0, false)
+	if caps.CPU && statDataFetchAttempts["CPU"] < maxDeviceDataFetchAttempts {
+		cp, err := cpuPercentFn(0, false)
 		if err != nil || len(cp) == 0 {
 			statDataFetchAttempts["CPU"]++
 			printf("cpu.Percent error: %v, attempt: %d", err, statDataFetchAttempts["CPU"])
@@ -172,29 +194,32 @@ func GetState(skipConnectionCount bool, skipProcsCount bool) *model.HostState {
 		}
 	}
 
-	vm, err := mem.VirtualMemory()
-	if err != nil {
-		printf("mem.VirtualMemory error: %v", err)
-	} else {
-		ret.MemUsed = vm.Total - vm.Available
-		if runtime.GOOS != "windows" {
-			ret.SwapUsed = vm.SwapTotal - vm.SwapFree
-		}
-	}
-	if runtime.GOOS == "windows" {
-		// gopsutil 在 Windows 下不能正确取 swap
-		ms, err := mem.SwapMemory()
+	if caps.Memory {
+		vm, err := virtualMemoryFn()
 		if err != nil {
-			printf("mem.SwapMemory error: %v", err)
+			printf("mem.VirtualMemory error: %v", err)
 		} else {
-			ret.SwapUsed = ms.Used
+			ret.MemUsed = vm.Total - vm.Available
+			if runtime.GOOS != "windows" {
+				ret.SwapUsed = vm.SwapTotal - vm.SwapFree
+			}
+		}
+		if runtime.GOOS == "windows" {
+			ms, err := swapMemoryFn()
+			if err != nil {
+				printf("mem.SwapMemory error: %v", err)
+			} else {
+				ret.SwapUsed = ms.Used
+			}
 		}
 	}
 
-	_, ret.DiskUsed = getDiskTotalAndUsed()
+	if caps.Disk {
+		_, ret.DiskUsed = getDiskTotalAndUsed()
+	}
 
-	if statDataFetchAttempts["Load"] < maxDeviceDataFetchAttempts {
-		loadStat, err := load.Avg()
+	if caps.CPU && statDataFetchAttempts["Load"] < maxDeviceDataFetchAttempts {
+		loadStat, err := loadAverageFn()
 		if err != nil {
 			statDataFetchAttempts["Load"]++
 			printf("load.Avg error: %v, attempt: %d", err, statDataFetchAttempts["Load"])
@@ -206,9 +231,8 @@ func GetState(skipConnectionCount bool, skipProcsCount bool) *model.HostState {
 		}
 	}
 
-	var procs []int32
-	if !skipProcsCount {
-		procs, err = process.Pids()
+	if caps.Processes {
+		procs, err := processIDsFn()
 		if err != nil {
 			printf("process.Pids error: %v", err)
 		} else {
@@ -216,25 +240,36 @@ func GetState(skipConnectionCount bool, skipProcsCount bool) *model.HostState {
 		}
 	}
 
-	if agentConfig.Temperature {
+	if caps.Temperature {
 		go updateTemperatureStat()
 		ret.Temperatures = temperatureStat
 	}
 
-	ret.GPU = updateGPUStat()
+	if caps.GPU {
+		ret.GPU = updateGPUStat()
+	}
 
-	ret.NetInTransfer, ret.NetOutTransfer = netInTransfer, netOutTransfer
-	ret.NetInSpeed, ret.NetOutSpeed = netInSpeed, netOutSpeed
-	ret.Uptime = uint64(time.Since(cachedBootTime).Seconds())
-	ret.TcpConnCount, ret.UdpConnCount = getConns(skipConnectionCount)
+	if caps.Network {
+		ret.NetInTransfer, ret.NetOutTransfer = netInTransfer, netOutTransfer
+		ret.NetInSpeed, ret.NetOutSpeed = netInSpeed, netOutSpeed
+	}
+	if !cachedBootTime.IsZero() {
+		ret.Uptime = uint64(time.Since(cachedBootTime).Seconds())
+	}
+	if caps.Connections {
+		ret.TcpConnCount, ret.UdpConnCount = getConns()
+	}
 
 	return &ret
 }
 
 // TrackNetworkSpeed NIC监控，统计流量与速度
 func TrackNetworkSpeed() {
+	if !agentConfig.Capabilities.Network {
+		return
+	}
 	var innerNetInTransfer, innerNetOutTransfer uint64
-	nc, err := net.IOCounters(true)
+	nc, err := networkCountersFn(true)
 	if err == nil {
 		for _, v := range nc {
 			if len(agentConfig.NICAllowlist) > 0 {
@@ -271,7 +306,7 @@ func getDiskTotalAndUsed() (total uint64, used uint64) {
 		}
 	} else {
 		// 否则使用默认过滤规则
-		diskList, _ := disk.Partitions(false)
+		diskList, _ := diskPartitionsFn(false)
 		for _, d := range diskList {
 			fsType := strings.ToLower(d.Fstype)
 			// 不统计 K8s 的虚拟挂载点：https://github.com/shirou/gopsutil/issues/1007
@@ -282,7 +317,7 @@ func getDiskTotalAndUsed() (total uint64, used uint64) {
 	}
 
 	for _, mountPath := range devices {
-		diskUsageOf, err := disk.Usage(mountPath)
+		diskUsageOf, err := diskUsageFn(mountPath)
 		if err == nil {
 			total += diskUsageOf.Total
 			used += diskUsageOf.Used
@@ -313,36 +348,34 @@ func getDiskTotalAndUsed() (total uint64, used uint64) {
 	return
 }
 
-func getConns(skipConnectionCount bool) (tcpConnCount, udpConnCount uint64) {
-	if !skipConnectionCount {
-		ss_err := true
-		if runtime.GOOS == "linux" {
-			tcpStat, err_tcp := goss.ConnectionsWithProtocol(goss.AF_INET, syscall.IPPROTO_TCP)
-			udpStat, err_udp := goss.ConnectionsWithProtocol(goss.AF_INET, syscall.IPPROTO_UDP)
+func getConns() (tcpConnCount, udpConnCount uint64) {
+	ss_err := true
+	if runtime.GOOS == "linux" {
+		tcpStat, err_tcp := goss.ConnectionsWithProtocol(goss.AF_INET, syscall.IPPROTO_TCP)
+		udpStat, err_udp := goss.ConnectionsWithProtocol(goss.AF_INET, syscall.IPPROTO_UDP)
+		if err_tcp == nil && err_udp == nil {
+			ss_err = false
+			tcpConnCount = uint64(len(tcpStat))
+			udpConnCount = uint64(len(udpStat))
+		}
+		if strings.Contains(CachedIP, ":") {
+			tcpStat6, err_tcp := goss.ConnectionsWithProtocol(goss.AF_INET6, syscall.IPPROTO_TCP)
+			udpStat6, err_udp := goss.ConnectionsWithProtocol(goss.AF_INET6, syscall.IPPROTO_UDP)
 			if err_tcp == nil && err_udp == nil {
 				ss_err = false
-				tcpConnCount = uint64(len(tcpStat))
-				udpConnCount = uint64(len(udpStat))
-			}
-			if strings.Contains(CachedIP, ":") {
-				tcpStat6, err_tcp := goss.ConnectionsWithProtocol(goss.AF_INET6, syscall.IPPROTO_TCP)
-				udpStat6, err_udp := goss.ConnectionsWithProtocol(goss.AF_INET6, syscall.IPPROTO_UDP)
-				if err_tcp == nil && err_udp == nil {
-					ss_err = false
-					tcpConnCount += uint64(len(tcpStat6))
-					udpConnCount += uint64(len(udpStat6))
-				}
+				tcpConnCount += uint64(len(tcpStat6))
+				udpConnCount += uint64(len(udpStat6))
 			}
 		}
-		if ss_err {
-			conns, _ := net.Connections("all")
-			for i := 0; i < len(conns); i++ {
-				switch conns[i].Type {
-				case syscall.SOCK_STREAM:
-					tcpConnCount++
-				case syscall.SOCK_DGRAM:
-					udpConnCount++
-				}
+	}
+	if ss_err {
+		conns, _ := networkConnectionsFn("all")
+		for i := 0; i < len(conns); i++ {
+			switch conns[i].Type {
+			case syscall.SOCK_STREAM:
+				tcpConnCount++
+			case syscall.SOCK_DGRAM:
+				udpConnCount++
 			}
 		}
 	}
@@ -350,7 +383,7 @@ func getConns(skipConnectionCount bool) (tcpConnCount, udpConnCount uint64) {
 }
 
 func updateGPUStat() float64 {
-	if agentConfig.GPU {
+	if agentConfig.Capabilities.GPU {
 		if statDataFetchAttempts["GPU"] < maxDeviceDataFetchAttempts {
 			gs, err := gpustat.GetGPUStat()
 			if err != nil {
@@ -373,7 +406,7 @@ func updateTemperatureStat() {
 	defer updateTempStatus.Store(false)
 
 	if statDataFetchAttempts["Temperatures"] < maxDeviceDataFetchAttempts {
-		temperatures, err := sensors.SensorsTemperatures()
+		temperatures, err := sensorTemperaturesFn()
 		if err != nil {
 			statDataFetchAttempts["Temperatures"]++
 			printf("host.SensorsTemperatures error: %v, attempt: %d", err, statDataFetchAttempts["Temperatures"])

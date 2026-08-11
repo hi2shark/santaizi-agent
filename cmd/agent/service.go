@@ -33,6 +33,7 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) Stop(s service.Service) error {
+	stopRunningAgent()
 	close(p.exit)
 	if service.Interactive() {
 		os.Exit(0)
@@ -58,15 +59,7 @@ func init() {
 
 func servicePreRun(cmd *cobra.Command, args []string) {
 	if args[0] == "install" {
-		if agentCliParam.ClientSecret == "" {
-			cmd.Help()
-			os.Exit(1)
-		}
-	}
-
-	if agentCliParam.ReportDelay < 1 || agentCliParam.ReportDelay > 4 {
-		println("report-delay 的区间为 1-4")
-		os.Exit(1)
+		preRun(cmd, args)
 	}
 }
 
@@ -77,16 +70,26 @@ func serviceActions(cmd *cobra.Command, args []string) {
 		{agentCliParam.Server != "localhost:5555", "-s", agentCliParam.Server},
 		{agentCliParam.ClientSecret != "", "-p", agentCliParam.ClientSecret},
 		{agentCliParam.TLS, "--tls", ""},
+		{agentCliParam.InsecureTLS, "--insecure", ""},
 		{agentConfig.Debug, "-d", ""},
-		{agentCliParam.ReportDelay != 1, "--report-delay", fmt.Sprint(agentCliParam.ReportDelay)},
-		{agentCliParam.SkipConnectionCount, "--skip-conn", ""},
-		{agentCliParam.SkipProcsCount, "--skip-procs", ""},
-		{agentCliParam.DisableCommandExecute, "--disable-command-execute", ""},
-		{agentCliParam.DisableAutoUpdate, "--disable-auto-update", ""},
-		{agentCliParam.DisableForceUpdate, "--disable-force-update", ""},
+		{agentCliParam.ReportDelay != 5, "--report-delay", fmt.Sprint(agentCliParam.ReportDelay)},
+		{agentCliParam.ConfigPath != "/etc/santaizi/agent.yaml", "--config", agentCliParam.ConfigPath},
+		{agentCliParam.DataDir != "/var/lib/santaizi-agent", "--data-dir", agentCliParam.DataDir},
+		{agentCliParam.DisableCPU, "--disable-cpu", ""},
+		{agentCliParam.DisableMemory, "--disable-memory", ""},
+		{agentCliParam.DisableDisk, "--disable-disk", ""},
+		{agentCliParam.DisableNetwork, "--disable-network", ""},
+		{agentCliParam.DisableConnections, "--disable-connections", ""},
+		{agentCliParam.DisableProcesses, "--disable-processes", ""},
+		{agentCliParam.EnableTemperature, "--temperature", ""},
+		{agentCliParam.EnableGPU, "--gpu", ""},
+		{agentCliParam.DisableHostInfo, "--disable-host-info", ""},
+		{agentCliParam.DisableIPReport, "--disable-ip-report", ""},
+		{agentCliParam.DisableHTTPProbe, "--disable-http-probe", ""},
+		{agentCliParam.DisableICMPProbe, "--disable-icmp-probe", ""},
+		{agentCliParam.DisableTCPProbe, "--disable-tcp-probe", ""},
+		{agentCliParam.DisableNAT, "--disable-nat", ""},
 		{agentCliParam.UseIPv6CountryCode, "--use-ipv6-countrycode", ""},
-		{agentConfig.GPU, "--gpu", ""},
-		{agentCliParam.UseGiteeToUpgrade, "--gitee", ""},
 		{agentCliParam.IPReportPeriod != 30*60, "-u", fmt.Sprint(agentCliParam.IPReportPeriod)},
 	}
 

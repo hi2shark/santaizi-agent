@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"net"
 	"reflect"
 	"testing"
@@ -27,23 +27,18 @@ func Test(t *testing.T) {
 }
 
 func TestLookupIP(t *testing.T) {
-	ip, err := lookupIP("www.google.com")
-	fmt.Printf("ip: %v, err: %v\n", ip, err)
-	if err != nil {
-		t.Errorf("lookupIP failed: %v", err)
+	original := lookupIPAddr
+	lookupIPAddr = func(context.Context, string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("192.0.2.10")}}, nil
 	}
-	_, err = net.ResolveIPAddr("ip", "www.google.com")
-	if err != nil {
-		t.Errorf("ResolveIPAddr failed: %v", err)
-	}
+	t.Cleanup(func() { lookupIPAddr = original })
 
-	ip, err = lookupIP("ipv6.google.com")
-	fmt.Printf("ip: %v, err: %v\n", ip, err)
-	if err != nil {
-		t.Errorf("lookupIP failed: %v", err)
+	ip, err := lookupIP("telemetry.test")
+	if err != nil || ip != "192.0.2.10" {
+		t.Fatalf("lookupIP() = %q, %v; want 192.0.2.10", ip, err)
 	}
-	_, err = net.ResolveIPAddr("ip", "ipv6.google.com")
-	if err != nil {
-		t.Errorf("ResolveIPAddr failed: %v", err)
+	ip, err = lookupIP("2001:db8::10")
+	if err != nil || ip != "2001:db8::10" {
+		t.Fatalf("lookupIP(literal) = %q, %v", ip, err)
 	}
 }

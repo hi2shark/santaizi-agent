@@ -2,6 +2,7 @@ package utls_test
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	utls "github.com/refraction-networking/utls"
@@ -10,35 +11,29 @@ import (
 	utlsx "github.com/hi2shark/santaizi-agent/pkg/utls"
 )
 
-const url = "https://www.patreon.com/login"
+func TestRoundTripperUsesBackdropAndBrowserHeadersForHTTP(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.UserAgent() == "" {
+			t.Error("browser user-agent was not applied")
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
 
-func TestCloudflareDetection(t *testing.T) {
-	client := http.DefaultClient
-
-	t.Logf("testing connection to %s", url)
-	resp, err := doRequest(client, url)
+	headers := util.BrowserHeaders()
+	client := &http.Client{Transport: utlsx.NewUTLSHTTPRoundTripperWithProxy(
+		utls.HelloChrome_Auto,
+		new(utls.Config),
+		http.DefaultTransport,
+		nil,
+		&headers,
+	)}
+	resp, err := doRequest(client, server.URL)
 	if err != nil {
-		t.Errorf("Get %s failed: %v", url, err)
+		t.Fatalf("local request failed: %v", err)
 	}
-
-	if resp.StatusCode == 403 {
-		t.Log("Default client is detected, switching to client with utls transport")
-		headers := util.BrowserHeaders()
-		client.Transport = utlsx.NewUTLSHTTPRoundTripperWithProxy(
-			utls.HelloChrome_Auto, new(utls.Config),
-			http.DefaultTransport, nil, &headers,
-		)
-		resp, err = doRequest(client, url)
-		if err != nil {
-			t.Errorf("Get %s failed: %v", url, err)
-		}
-		if resp.StatusCode == 403 {
-			t.Fail()
-		} else {
-			t.Log("Client with utls transport passed Cloudflare detection")
-		}
-	} else {
-		t.Log("Default client passed Cloudflare detection")
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusNoContent)
 	}
 }
 

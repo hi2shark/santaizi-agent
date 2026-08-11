@@ -1,32 +1,24 @@
 package monitor
 
 import (
-	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
-func TestGeoIPApi(t *testing.T) {
-	for i := 0; i < len(cfList); i++ {
-		resp, err := httpGetWithUA(httpClientV4, cfList[i])
-		if err != nil {
-			t.Fatalf("httpGetWithUA(%s) error: %v", cfList[i], err)
+func TestFetchIPUsesConfiguredEndpoint(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Header.Get("User-Agent") == "" {
+			t.Error("missing User-Agent")
 		}
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatalf("io.ReadAll(%s) error: %v", cfList[i], err)
-		}
-		resp.Body.Close()
-		ip := string(body)
-		t.Logf("%s %s", cfList[i], ip)
-		if ip == "" {
-			t.Fatalf("httpGetWithUA(%s) error: %v", cfList[i], err)
-		}
-	}
-}
+		_, _ = response.Write([]byte("fl=example\nip=192.0.2.10\n"))
+	}))
+	defer server.Close()
 
-func TestFetchGeoIP(t *testing.T) {
-	ip := fetchIP(cfList, false)
-	if ip == "" {
-		t.Fatalf("fetchGeoIP() error: %v", ip)
+	original := httpClientV4
+	httpClientV4 = server.Client()
+	t.Cleanup(func() { httpClientV4 = original })
+	if got := fetchIP([]string{server.URL}, false); got != "192.0.2.10" {
+		t.Fatalf("fetchIP()=%q, want 192.0.2.10", got)
 	}
 }
