@@ -24,13 +24,13 @@ func IsWindows() bool {
 
 func Println(enabled bool, v ...interface{}) {
 	if enabled {
-		Logger.Infof("NEZHA@%s>> %v", time.Now().Format("2006-01-02 15:04:05"), fmt.Sprint(v...))
+		Logger.Infof("SANTAIZI@%s>> %v", time.Now().Format("2006-01-02 15:04:05"), fmt.Sprint(v...))
 	}
 }
 
 func Printf(enabled bool, format string, v ...interface{}) {
 	if enabled {
-		Logger.Infof("NEZHA@%s>> "+format, append([]interface{}{time.Now().Format("2006-01-02 15:04:05")}, v...)...)
+		Logger.Infof("SANTAIZI@%s>> "+format, append([]interface{}{time.Now().Format("2006-01-02 15:04:05")}, v...)...)
 	}
 }
 

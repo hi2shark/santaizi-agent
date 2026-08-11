@@ -1,6 +1,12 @@
-# Nezha Agent
-  
-Agent of Nezha Monitoring
+# Santaizi Agent
+
+Agent（探针 / 从端）of 三太子监控 · Santaizi Monitoring
+
+## 版权与致谢
+
+本项目基于 [nezhahq/agent](https://github.com/nezhahq/agent)（哪吒监控探针）衍生修改，原作者版权保留。详见 [`LICENSE`](./LICENSE) 与 [`NOTICE`](./NOTICE)。
+
+产品品牌为 **三太子 / Santaizi**；gRPC 服务为 `SantaiziService`，与上游 Nezha 线协议不兼容。
 
 ## Contributors
 

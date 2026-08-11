@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/nezhahq/agent/pkg/util"
+	"github.com/hi2shark/santaizi-agent/pkg/util"
 )
 
 type ROCmSMI struct {

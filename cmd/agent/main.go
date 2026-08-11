@@ -30,14 +30,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/resolver"
 
-	"github.com/nezhahq/agent/model"
-	fm "github.com/nezhahq/agent/pkg/fm"
-	"github.com/nezhahq/agent/pkg/monitor"
-	"github.com/nezhahq/agent/pkg/processgroup"
-	"github.com/nezhahq/agent/pkg/pty"
-	"github.com/nezhahq/agent/pkg/util"
-	utlsx "github.com/nezhahq/agent/pkg/utls"
-	pb "github.com/nezhahq/agent/proto"
+	"github.com/hi2shark/santaizi-agent/model"
+	fm "github.com/hi2shark/santaizi-agent/pkg/fm"
+	"github.com/hi2shark/santaizi-agent/pkg/monitor"
+	"github.com/hi2shark/santaizi-agent/pkg/processgroup"
+	"github.com/hi2shark/santaizi-agent/pkg/pty"
+	"github.com/hi2shark/santaizi-agent/pkg/util"
+	utlsx "github.com/hi2shark/santaizi-agent/pkg/utls"
+	pb "github.com/hi2shark/santaizi-agent/proto"
 )
 
 // Agent 运行时参数。如需添加新参数，记得同时在 service.go 中添加
@@ -63,7 +63,7 @@ type AgentCliParam struct {
 var (
 	version     string
 	arch        string
-	client      pb.NezhaServiceClient
+	client      pb.SantaiziServiceClient
 	initialized bool
 	dnsResolver = &net.Resolver{PreferGo: true}
 )
@@ -271,7 +271,7 @@ func run() {
 			retry()
 			continue
 		}
-		client = pb.NewNezhaServiceClient(conn)
+		client = pb.NewSantaiziServiceClient(conn)
 		// 第一步注册
 		timeOutCtx, cancel := context.WithTimeout(context.Background(), networkTimeOut)
 		_, err = client.ReportSystemInfo(timeOutCtx, monitor.GetHost().PB())
@@ -308,9 +308,9 @@ func runService(action string, flags []string) {
 	}
 
 	svcConfig := &service.Config{
-		Name:             "nezha-agent",
-		DisplayName:      "Nezha Agent",
-		Description:      "哪吒探针监控端",
+		Name:             "santaizi-agent",
+		DisplayName:      "Santaizi Agent",
+		Description:      "三太子探针监控端",
 		Arguments:        flags,
 		WorkingDirectory: dir,
 		Option:           winConfig,
@@ -355,7 +355,7 @@ func runService(action string, flags []string) {
 	}
 }
 
-func receiveTasks(tasks pb.NezhaService_RequestTaskClient) error {
+func receiveTasks(tasks pb.SantaiziService_RequestTaskClient) error {
 	var err error
 	defer printf("receiveTasks exit %v => %v", time.Now(), err)
 	for {
@@ -472,7 +472,7 @@ func reportHost() bool {
 // 	var latest *selfupdate.Release
 // 	var err error
 // 	if monitor.CachedCountryCode != "cn" && !agentCliParam.UseGiteeToUpgrade {
-// 		latest, err = selfupdate.UpdateSelf(v, "nezhahq/agent")
+// 		latest, err = selfupdate.UpdateSelf(v, "santaizihq/agent")
 // 	} else {
 // 		latest, err = selfupdate.UpdateSelfGitee(v, "naibahq/agent")
 // 	}

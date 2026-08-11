@@ -28,6 +28,6 @@ builds:
       - goos: windows
         goarch: arm
     main: ./cmd/agent
-    binary: nezha-agent
+    binary: santaizi-agent
 snapshot:
-  version_template: "nezha-agent"
+  version_template: "santaizi-agent"

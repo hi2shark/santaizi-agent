@@ -1,4 +1,4 @@
-module github.com/nezhahq/agent
+module github.com/hi2shark/santaizi-agent
 
 go 1.20
 

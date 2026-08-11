@@ -10,16 +10,16 @@ import (
 	"os/user"
 	"path/filepath"
 
-	pb "github.com/nezhahq/agent/proto"
+	pb "github.com/hi2shark/santaizi-agent/proto"
 )
 
 type Task struct {
-	taskClient pb.NezhaService_IOStreamClient
+	taskClient pb.SantaiziService_IOStreamClient
 	printf     func(string, ...interface{})
 	remoteData *pb.IOStreamData
 }
 
-func NewFMClient(client pb.NezhaService_IOStreamClient, printFunc func(string, ...interface{})) *Task {
+func NewFMClient(client pb.SantaiziService_IOStreamClient, printFunc func(string, ...interface{})) *Task {
 	return &Task{
 		taskClient: client,
 		printf:     printFunc,
