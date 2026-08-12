@@ -49,6 +49,8 @@ type AgentCliParam struct {
 	Version            bool
 	IPReportPeriod     uint32
 	UseIPv6CountryCode bool
+	IPReportInterface  string
+	CountryCode        string
 	ConfigPath         string
 	DataDir            string
 }
@@ -119,6 +121,8 @@ func init() {
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableTCPProbe, "disable-tcp-probe", false, "禁止 TCP 探测")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableNAT, "disable-nat", false, "禁止内网穿透")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.UseIPv6CountryCode, "use-ipv6-countrycode", false, "优先使用 IPv6 位置信息")
+	agentCmd.PersistentFlags().StringVar(&agentCliParam.IPReportInterface, "ip-report-interface", "", "公网 IP 探测与流量统计绑定的网卡名")
+	agentCmd.PersistentFlags().StringVar(&agentCliParam.CountryCode, "country-code", "", "手填国家/区域识别码并直接上报")
 	agentCmd.PersistentFlags().Uint32VarP(&agentCliParam.IPReportPeriod, "ip-report-period", "u", 30*60, "公网 IP 更新间隔（秒）")
 	agentCmd.Flags().BoolVarP(&agentCliParam.Version, "version", "v", false, "显示版本")
 
@@ -166,6 +170,7 @@ func preRun(cmd *cobra.Command, args []string) {
 	agentConfig.ApplyDefaults(dataDirOverride)
 	applyCapabilityFlags(cmd)
 	monitor.InitConfig(&agentConfig)
+	monitor.ConfigureIPReport(agentCliParam.IPReportInterface, agentCliParam.CountryCode)
 	monitor.Version = version
 
 	if agentCliParam.Version {

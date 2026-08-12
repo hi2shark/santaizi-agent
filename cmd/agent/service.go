@@ -90,6 +90,8 @@ func serviceActions(cmd *cobra.Command, args []string) {
 		{agentCliParam.DisableTCPProbe, "--disable-tcp-probe", ""},
 		{agentCliParam.DisableNAT, "--disable-nat", ""},
 		{agentCliParam.UseIPv6CountryCode, "--use-ipv6-countrycode", ""},
+		{agentCliParam.IPReportInterface != "", "--ip-report-interface", agentCliParam.IPReportInterface},
+		{agentCliParam.CountryCode != "", "--country-code", agentCliParam.CountryCode},
 		{agentCliParam.IPReportPeriod != 30*60, "-u", fmt.Sprint(agentCliParam.IPReportPeriod)},
 	}
 

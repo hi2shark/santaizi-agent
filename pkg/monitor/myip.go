@@ -22,6 +22,18 @@ var (
 	httpClientV6                            = util.NewSingleStackHTTPClient(time.Second*20, time.Second*5, time.Second*10, true)
 )
 
+// ConfigureIPReport prepares IP probe clients, optional NIC binding, and a manual country/region code.
+func ConfigureIPReport(iface, countryCode string) {
+	iface = strings.TrimSpace(iface)
+	CachedCountryCode = strings.TrimSpace(countryCode)
+	httpClientV4 = util.NewSingleStackHTTPClient(time.Second*20, time.Second*5, time.Second*10, false, iface)
+	httpClientV6 = util.NewSingleStackHTTPClient(time.Second*20, time.Second*5, time.Second*10, true, iface)
+	if iface == "" || agentConfig == nil {
+		return
+	}
+	agentConfig.NICAllowlist = map[string]bool{iface: true}
+}
+
 // UpdateIP 按设置时间间隔更新IP地址的缓存
 func UpdateIP(useIPv6CountryCode bool, period uint32) {
 	for {

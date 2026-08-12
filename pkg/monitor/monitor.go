@@ -173,6 +173,7 @@ func GetHost() *model.Host {
 
 	if caps.IPReport {
 		ret.IP = CachedIP
+		ret.CountryCode = CachedCountryCode
 	}
 	ret.Version = Version
 

@@ -13,10 +13,15 @@ var DNSServersV4 = []string{"8.8.4.4:53", "223.5.5.5:53", "94.140.14.140:53", "1
 var DNSServersV6 = []string{"[2001:4860:4860::8844]:53", "[2400:3200::1]:53", "[2a10:50c0::1:ff]:53", "[2402:4e00::]:53"}
 var DNSServersAll = append(DNSServersV4, DNSServersV6...)
 
-func NewSingleStackHTTPClient(httpTimeout, dialTimeout, keepAliveTimeout time.Duration, ipv6 bool) *http.Client {
+func NewSingleStackHTTPClient(httpTimeout, dialTimeout, keepAliveTimeout time.Duration, ipv6 bool, iface ...string) *http.Client {
 	dialer := &net.Dialer{
 		Timeout:   dialTimeout,
 		KeepAlive: keepAliveTimeout,
+	}
+	if len(iface) > 0 && strings.TrimSpace(iface[0]) != "" {
+		if local, err := InterfaceLocalAddr(strings.TrimSpace(iface[0]), ipv6); err == nil {
+			dialer.LocalAddr = local
+		}
 	}
 
 	transport := &http.Transport{
@@ -35,6 +40,31 @@ func NewSingleStackHTTPClient(httpTimeout, dialTimeout, keepAliveTimeout time.Du
 		Transport: transport,
 		Timeout:   httpTimeout,
 	}
+}
+
+// InterfaceLocalAddr returns a TCP local address bound to the named interface.
+func InterfaceLocalAddr(name string, ipv6 bool) (net.Addr, error) {
+	ifi, err := net.InterfaceByName(name)
+	if err != nil {
+		return nil, err
+	}
+	addrs, err := ifi.Addrs()
+	if err != nil {
+		return nil, err
+	}
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok || ipNet.IP == nil || !ipNet.IP.IsGlobalUnicast() {
+			continue
+		}
+		ip := ipNet.IP
+		isV6 := ip.To4() == nil
+		if isV6 != ipv6 {
+			continue
+		}
+		return &net.TCPAddr{IP: ip}, nil
+	}
+	return nil, errors.New("no matching unicast address on interface")
 }
 
 func resolveIP(addr string, ipv6 bool) (string, error) {
