@@ -185,14 +185,14 @@ func (m *telemetryManager) collectLoop() {
 				eventPayload(&pb.TelemetryEvent_State{State: state})); errors.Is(err, wal.ErrNeedsRollup) || errors.Is(err, wal.ErrHardLimit) {
 				m.appendPressureReplacement(state, event.GetSequence(), err)
 			} else if err != nil && !errors.Is(err, wal.ErrDownsampled) {
-				printf("追加状态遥测失败: %v", err)
+				printf("追加状态探测失败: %v", err)
 			}
 		case <-heartbeatTicker.C:
 			host := m.snapshotHost()
 			event, err := m.appendEvent(pb.TelemetryEventType_TELEMETRY_EVENT_TYPE_HEARTBEAT, pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL,
 				eventPayload(&pb.TelemetryEvent_Heartbeat{Heartbeat: &pb.HeartbeatPayload{BootTimeUnix: host.GetBootTime()}}))
 			if err != nil {
-				printf("追加心跳遥测失败: %v", err)
+				printf("追加心跳探测失败: %v", err)
 				m.appendFailedEventGap(event, "heartbeat WAL append failed")
 			}
 		case <-hostTicker.C:
@@ -202,12 +202,12 @@ func (m *telemetryManager) collectLoop() {
 			m.mu.Unlock()
 			if event, err := m.appendEvent(pb.TelemetryEventType_TELEMETRY_EVENT_TYPE_HOST, pb.TelemetryPriority_TELEMETRY_PRIORITY_P1_IMPORTANT,
 				eventPayload(&pb.TelemetryEvent_Host{Host: host})); err != nil {
-				printf("追加主机遥测失败: %v", err)
+				printf("追加主机探测失败: %v", err)
 				m.appendFailedEventGap(event, "host WAL append failed")
 			}
 		case <-gcTicker.C:
 			if _, err := m.wal.Reclaim(m.recordAcknowledgedByAll); err != nil {
-				printf("回收遥测 WAL 失败: %v", err)
+				printf("回收探测 WAL 失败: %v", err)
 			}
 		}
 	}
@@ -353,7 +353,7 @@ func (m *telemetryManager) appendExplicitGap(nodeUUID, sessionID []byte, start, 
 		EndSequence: end, Reason: reason, ReplacementEventId: append([]byte(nil), replacement...), CreatedAtUnixNano: time.Now().UnixNano(),
 	}
 	if err := m.wal.Append(&pb.TelemetryRecord{Record: &pb.TelemetryRecord_Gap{Gap: gap}}, pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL); err != nil {
-		printf("追加遥测缺口事实失败: %v", err)
+		printf("追加探测缺口事实失败: %v", err)
 	}
 }
 

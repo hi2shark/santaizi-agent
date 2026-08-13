@@ -105,7 +105,7 @@ func init() {
 	agentCmd.PersistentFlags().BoolVarP(&agentConfig.Debug, "debug", "d", false, "开启调试日志")
 	agentCmd.PersistentFlags().IntVar(&agentCliParam.ReportDelay, "report-delay", 5, "系统状态采集间隔")
 	agentCmd.PersistentFlags().StringVar(&agentCliParam.ConfigPath, "config", "/etc/santaizi/agent.yaml", "配置文件路径")
-	agentCmd.PersistentFlags().StringVar(&agentCliParam.DataDir, "data-dir", "/var/lib/santaizi-agent", "可靠遥测数据目录")
+	agentCmd.PersistentFlags().StringVar(&agentCliParam.DataDir, "data-dir", "/var/lib/santaizi-agent", "可靠探测数据目录")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableCPU, "disable-cpu", false, "不采集 CPU 与负载")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableMemory, "disable-memory", false, "不采集内存与 Swap")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableDisk, "disable-disk", false, "不采集磁盘")
@@ -257,12 +257,12 @@ func run() {
 	auth := model.AuthHandler{ClientSecret: agentCliParam.ClientSecret}
 	manager, err := startV2Telemetry(ctx, auth)
 	if err != nil {
-		printf("启动可靠遥测失败: %v", err)
+		printf("启动可靠探测失败: %v", err)
 		return
 	}
 	defer func() {
 		if err := manager.Close(); err != nil {
-			printf("关闭可靠遥测失败: %v", err)
+			printf("关闭可靠探测失败: %v", err)
 		}
 	}()
 	if agentConfig.Capabilities.IPReport {
