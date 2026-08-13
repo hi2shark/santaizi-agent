@@ -61,6 +61,14 @@ capabilities:
 
 已用旧方式安装、unit 里仍带 `-p` 的实例，需要重新执行安装（或再次 `service install`）以重写服务定义。
 
+升级（本机执行，保留配置 / 身份 / WAL）：
+
+```bash
+curl -fSL https://raw.githubusercontent.com/hi2shark/santaizi-dashboard/master/script/upgrade_agent.sh | bash
+```
+
+Windows 使用同仓 `script/upgrade.ps1`。须先升级面板；协议不兼容时走清洁安装，不要用升级脚本。
+
 卸载：
 
 ```bash
