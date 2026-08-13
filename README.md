@@ -13,6 +13,12 @@
 默认配置文件为 `/etc/santaizi/agent.yaml`，可靠探测数据目录为 `/var/lib/santaizi-agent/`，二进制安装在 `/opt/santaizi/agent/`。`--config` 与 `--data-dir` 可覆盖默认路径。
 
 ```yaml
+server: 10.0.0.10:5555
+client_secret: "your-agent-secret"
+tls: false
+insecure_tls: false
+report_delay: 5
+
 telemetry:
   data_dir: /var/lib/santaizi-agent
   state_interval: 5s
@@ -51,4 +57,14 @@ capabilities:
 
 控制流只能下发类型化 HTTP、ICMP、TCP 探测和 NAT 建链请求。NAT 数据使用独立 `SantaiziNATService/NATStream`，协议不包含通用命令、终端、文件管理或更新能力。心跳与可靠身份始终启用；其他采集及网络能力可通过 `capabilities` 或对应 CLI 参数关闭。
 
-运行 `agent --help` 可查看完整参数。安装系统服务时传入的能力参数会写入服务启动参数，例如 `--disable-cpu`、`--disable-http-probe`、`--disable-nat`、`--temperature` 和 `--gpu`。
+运行 `agent --help` 可查看完整参数。`service install` 会把面板地址、密钥、TLS 和能力开关写入配置文件（权限 `0600`）；系统服务启动参数只有 `--config`，不会把密钥放进 `ps` / `systemctl cat`。前台调试仍可用 `-s` / `-p`。
+
+已用旧方式安装、unit 里仍带 `-p` 的实例，需要重新执行安装（或再次 `service install`）以重写服务定义。
+
+卸载：
+
+```bash
+santaizi-agent-uninstall
+```
+
+Windows 为 `C:\santaizi\santaizi-agent-uninstall.cmd`。该命令会停止并删除服务，以及程序目录、配置和数据。

@@ -12,46 +12,46 @@ import (
 )
 
 type TelemetryEndpointConfig struct {
-	ID          string `mapstructure:"id" yaml:"id"`
-	Address     string `mapstructure:"address" yaml:"address"`
-	TLS         bool   `mapstructure:"tls" yaml:"tls"`
-	InsecureTLS bool   `mapstructure:"insecure_tls" yaml:"insecure_tls"`
+	ID          string `json:"id" mapstructure:"id" yaml:"id"`
+	Address     string `json:"address" mapstructure:"address" yaml:"address"`
+	TLS         bool   `json:"tls" mapstructure:"tls" yaml:"tls"`
+	InsecureTLS bool   `json:"insecure_tls" mapstructure:"insecure_tls" yaml:"insecure_tls"`
 }
 
 type WALConfig struct {
-	SegmentSizeBytes int64         `mapstructure:"segment_size_bytes" yaml:"segment_size_bytes"`
-	MaxSizeBytes     int64         `mapstructure:"max_size_bytes" yaml:"max_size_bytes"`
-	ReserveBytes     int64         `mapstructure:"reserve_bytes" yaml:"reserve_bytes"`
-	FsyncInterval    time.Duration `mapstructure:"fsync_interval" yaml:"fsync_interval"`
-	FsyncRecords     int           `mapstructure:"fsync_records" yaml:"fsync_records"`
+	SegmentSizeBytes int64         `json:"segment_size_bytes" mapstructure:"segment_size_bytes" yaml:"segment_size_bytes"`
+	MaxSizeBytes     int64         `json:"max_size_bytes" mapstructure:"max_size_bytes" yaml:"max_size_bytes"`
+	ReserveBytes     int64         `json:"reserve_bytes" mapstructure:"reserve_bytes" yaml:"reserve_bytes"`
+	FsyncInterval    time.Duration `json:"fsync_interval" mapstructure:"fsync_interval" yaml:"fsync_interval"`
+	FsyncRecords     int           `json:"fsync_records" mapstructure:"fsync_records" yaml:"fsync_records"`
 }
 
 type TelemetryConfig struct {
-	DataDir           string                    `mapstructure:"data_dir" yaml:"data_dir"`
-	StateInterval     time.Duration             `mapstructure:"state_interval" yaml:"state_interval"`
-	HeartbeatInterval time.Duration             `mapstructure:"heartbeat_interval" yaml:"heartbeat_interval"`
-	HostInterval      time.Duration             `mapstructure:"host_interval" yaml:"host_interval"`
-	BatchSize         int                       `mapstructure:"batch_size" yaml:"batch_size"`
-	DisabledRemoteIDs []string                  `mapstructure:"disabled_remote_ids" yaml:"disabled_remote_ids"`
-	Collectors        []TelemetryEndpointConfig `mapstructure:"collectors" yaml:"collectors"`
-	WAL               WALConfig                 `mapstructure:"wal" yaml:"wal"`
+	DataDir           string                    `json:"data_dir" mapstructure:"data_dir" yaml:"data_dir"`
+	StateInterval     time.Duration             `json:"state_interval" mapstructure:"state_interval" yaml:"state_interval"`
+	HeartbeatInterval time.Duration             `json:"heartbeat_interval" mapstructure:"heartbeat_interval" yaml:"heartbeat_interval"`
+	HostInterval      time.Duration             `json:"host_interval" mapstructure:"host_interval" yaml:"host_interval"`
+	BatchSize         int                       `json:"batch_size" mapstructure:"batch_size" yaml:"batch_size"`
+	DisabledRemoteIDs []string                  `json:"disabled_remote_ids" mapstructure:"disabled_remote_ids" yaml:"disabled_remote_ids"`
+	Collectors        []TelemetryEndpointConfig `json:"collectors" mapstructure:"collectors" yaml:"collectors"`
+	WAL               WALConfig                 `json:"wal" mapstructure:"wal" yaml:"wal"`
 }
 
 type CapabilityConfig struct {
-	CPU         bool `mapstructure:"cpu" yaml:"cpu"`
-	Memory      bool `mapstructure:"memory" yaml:"memory"`
-	Disk        bool `mapstructure:"disk" yaml:"disk"`
-	Network     bool `mapstructure:"network" yaml:"network"`
-	Connections bool `mapstructure:"connections" yaml:"connections"`
-	Processes   bool `mapstructure:"processes" yaml:"processes"`
-	Temperature bool `mapstructure:"temperature" yaml:"temperature"`
-	GPU         bool `mapstructure:"gpu" yaml:"gpu"`
-	HostInfo    bool `mapstructure:"host_info" yaml:"host_info"`
-	IPReport    bool `mapstructure:"ip_report" yaml:"ip_report"`
-	HTTPProbe   bool `mapstructure:"http_probe" yaml:"http_probe"`
-	ICMPProbe   bool `mapstructure:"icmp_probe" yaml:"icmp_probe"`
-	TCPProbe    bool `mapstructure:"tcp_probe" yaml:"tcp_probe"`
-	NAT         bool `mapstructure:"nat" yaml:"nat"`
+	CPU         bool `json:"cpu" mapstructure:"cpu" yaml:"cpu"`
+	Memory      bool `json:"memory" mapstructure:"memory" yaml:"memory"`
+	Disk        bool `json:"disk" mapstructure:"disk" yaml:"disk"`
+	Network     bool `json:"network" mapstructure:"network" yaml:"network"`
+	Connections bool `json:"connections" mapstructure:"connections" yaml:"connections"`
+	Processes   bool `json:"processes" mapstructure:"processes" yaml:"processes"`
+	Temperature bool `json:"temperature" mapstructure:"temperature" yaml:"temperature"`
+	GPU         bool `json:"gpu" mapstructure:"gpu" yaml:"gpu"`
+	HostInfo    bool `json:"host_info" mapstructure:"host_info" yaml:"host_info"`
+	IPReport    bool `json:"ip_report" mapstructure:"ip_report" yaml:"ip_report"`
+	HTTPProbe   bool `json:"http_probe" mapstructure:"http_probe" yaml:"http_probe"`
+	ICMPProbe   bool `json:"icmp_probe" mapstructure:"icmp_probe" yaml:"icmp_probe"`
+	TCPProbe    bool `json:"tcp_probe" mapstructure:"tcp_probe" yaml:"tcp_probe"`
+	NAT         bool `json:"nat" mapstructure:"nat" yaml:"nat"`
 }
 
 func DefaultCapabilities() CapabilityConfig {
@@ -62,13 +62,22 @@ func DefaultCapabilities() CapabilityConfig {
 }
 
 type AgentConfig struct {
-	HardDrivePartitionAllowlist []string         `mapstructure:"hard_drive_partition_allowlist" yaml:"hard_drive_partition_allowlist,omitempty"`
-	NICAllowlist                map[string]bool  `mapstructure:"nic_allowlist" yaml:"nic_allowlist,omitempty"`
-	DNS                         []string         `mapstructure:"dns" yaml:"dns,omitempty"`
-	Capabilities                CapabilityConfig `mapstructure:"capabilities" yaml:"capabilities"`
-	Debug                       bool             `mapstructure:"debug" yaml:"debug"`
-	Telemetry                   TelemetryConfig  `mapstructure:"telemetry" yaml:"telemetry"`
-	v                           *viper.Viper     `yaml:"-"`
+	Server                      string           `json:"server" mapstructure:"server" yaml:"server"`
+	ClientSecret                string           `json:"client_secret" mapstructure:"client_secret" yaml:"client_secret"`
+	TLS                         bool             `json:"tls" mapstructure:"tls" yaml:"tls"`
+	InsecureTLS                 bool             `json:"insecure_tls" mapstructure:"insecure_tls" yaml:"insecure_tls"`
+	ReportDelay                 int              `json:"report_delay" mapstructure:"report_delay" yaml:"report_delay"`
+	IPReportPeriod              uint32           `json:"ip_report_period" mapstructure:"ip_report_period" yaml:"ip_report_period"`
+	IPReportInterface           string           `json:"ip_report_interface,omitempty" mapstructure:"ip_report_interface" yaml:"ip_report_interface,omitempty"`
+	CountryCode                 string           `json:"country_code,omitempty" mapstructure:"country_code" yaml:"country_code,omitempty"`
+	UseIPv6CountryCode          bool             `json:"use_ipv6_countrycode,omitempty" mapstructure:"use_ipv6_countrycode" yaml:"use_ipv6_countrycode,omitempty"`
+	HardDrivePartitionAllowlist []string         `json:"hard_drive_partition_allowlist,omitempty" mapstructure:"hard_drive_partition_allowlist" yaml:"hard_drive_partition_allowlist,omitempty"`
+	NICAllowlist                map[string]bool  `json:"nic_allowlist,omitempty" mapstructure:"nic_allowlist" yaml:"nic_allowlist,omitempty"`
+	DNS                         []string         `json:"dns,omitempty" mapstructure:"dns" yaml:"dns,omitempty"`
+	Capabilities                CapabilityConfig `json:"capabilities" mapstructure:"capabilities" yaml:"capabilities"`
+	Debug                       bool             `json:"debug" mapstructure:"debug" yaml:"debug"`
+	Telemetry                   TelemetryConfig  `json:"telemetry" mapstructure:"telemetry" yaml:"telemetry"`
+	v                           *viper.Viper     `json:"-" yaml:"-"`
 }
 
 // Read 从给定的文件目录加载配置文件
@@ -112,6 +121,12 @@ func (c *AgentConfig) ApplyDefaults(dataDirOverride string) {
 	}
 	if c.Telemetry.DataDir == "" {
 		c.Telemetry.DataDir = "/var/lib/santaizi-agent"
+	}
+	if c.ReportDelay <= 0 {
+		c.ReportDelay = 5
+	}
+	if c.IPReportPeriod == 0 {
+		c.IPReportPeriod = 30 * 60
 	}
 	if c.Telemetry.StateInterval <= 0 {
 		c.Telemetry.StateInterval = 5 * time.Second

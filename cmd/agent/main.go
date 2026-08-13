@@ -4,16 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/nezhahq/service"
 	"github.com/shirou/gopsutil/v4/host"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -160,14 +159,21 @@ func persistPreRun(cmd *cobra.Command, args []string) {
 }
 
 func preRun(cmd *cobra.Command, args []string) {
+	debugFromCLI := agentConfig.Debug
+	debugChanged := flagChanged(cmd, "debug")
 	if err := agentConfig.Read(agentCliParam.ConfigPath); err != nil {
 		panic(fmt.Sprintf("读取配置失败: %v", err))
 	}
-	dataDirOverride := ""
-	if flagChanged(cmd, "data-dir") {
-		dataDirOverride = agentCliParam.DataDir
+	if debugChanged {
+		agentConfig.Debug = debugFromCLI
 	}
-	agentConfig.ApplyDefaults(dataDirOverride)
+	if flagChanged(cmd, "data-dir") {
+		agentConfig.ApplyDefaults(agentCliParam.DataDir)
+	} else {
+		agentConfig.ApplyDefaults("")
+		agentCliParam.DataDir = agentConfig.Telemetry.DataDir
+	}
+	mergeCLIFromConfig(func(name string) bool { return flagChanged(cmd, name) })
 	applyCapabilityFlags(cmd)
 	monitor.InitConfig(&agentConfig)
 	monitor.ConfigureIPReport(agentCliParam.IPReportInterface, agentCliParam.CountryCode)
@@ -184,6 +190,56 @@ func preRun(cmd *cobra.Command, args []string) {
 	if agentCliParam.ReportDelay < 1 || agentCliParam.ReportDelay > 3600 {
 		panic("report-delay 必须在 1 到 3600 秒之间")
 	}
+}
+
+func mergeCLIFromConfig(changed func(string) bool) {
+	if !changed("server") && strings.TrimSpace(agentConfig.Server) != "" {
+		agentCliParam.Server = agentConfig.Server
+	}
+	if !changed("password") && strings.TrimSpace(agentConfig.ClientSecret) != "" {
+		agentCliParam.ClientSecret = agentConfig.ClientSecret
+	}
+	if !changed("tls") {
+		agentCliParam.TLS = agentConfig.TLS
+	}
+	if !changed("insecure") {
+		agentCliParam.InsecureTLS = agentConfig.InsecureTLS
+	}
+	if !changed("report-delay") && agentConfig.ReportDelay > 0 {
+		agentCliParam.ReportDelay = agentConfig.ReportDelay
+	}
+	if !changed("ip-report-period") && agentConfig.IPReportPeriod > 0 {
+		agentCliParam.IPReportPeriod = agentConfig.IPReportPeriod
+	}
+	if !changed("ip-report-interface") && agentConfig.IPReportInterface != "" {
+		agentCliParam.IPReportInterface = agentConfig.IPReportInterface
+	}
+	if !changed("country-code") && agentConfig.CountryCode != "" {
+		agentCliParam.CountryCode = agentConfig.CountryCode
+	}
+	if !changed("use-ipv6-countrycode") {
+		agentCliParam.UseIPv6CountryCode = agentConfig.UseIPv6CountryCode
+	}
+}
+
+func syncConfigFromCLI() {
+	agentConfig.Server = agentCliParam.Server
+	agentConfig.ClientSecret = agentCliParam.ClientSecret
+	agentConfig.TLS = agentCliParam.TLS
+	agentConfig.InsecureTLS = agentCliParam.InsecureTLS
+	agentConfig.ReportDelay = agentCliParam.ReportDelay
+	agentConfig.IPReportPeriod = agentCliParam.IPReportPeriod
+	agentConfig.IPReportInterface = agentCliParam.IPReportInterface
+	agentConfig.CountryCode = agentCliParam.CountryCode
+	agentConfig.UseIPv6CountryCode = agentCliParam.UseIPv6CountryCode
+	if agentCliParam.DataDir != "" {
+		agentConfig.Telemetry.DataDir = agentCliParam.DataDir
+	}
+}
+
+func persistRuntimeConfig() error {
+	syncConfigFromCLI()
+	return agentConfig.Save()
 }
 
 func flagChanged(cmd *cobra.Command, name string) bool {
@@ -276,46 +332,6 @@ func stopRunningAgent() {
 	defer runCancelMu.Unlock()
 	if runCancel != nil {
 		runCancel()
-	}
-}
-
-func runService(action string, flags []string) {
-	dir, err := os.Getwd()
-	if err != nil {
-		printf("获取当前工作目录失败: %v", err)
-		return
-	}
-	config := &service.Config{
-		Name: "santaizi-agent", DisplayName: "Santaizi Agent", Description: "三太子探针监控端",
-		Arguments: flags, WorkingDirectory: dir, Option: map[string]interface{}{"OnFailure": "restart"},
-	}
-	program := &program{exit: make(chan struct{})}
-	installedService, err := service.New(program, config)
-	if err != nil {
-		printf("创建系统服务失败，以前台模式运行: %v", err)
-		run()
-		return
-	}
-	program.service = installedService
-	if agentConfig.Debug {
-		serviceLogger, loggerErr := installedService.Logger(nil)
-		if loggerErr != nil {
-			printf("获取系统服务日志器失败: %v", loggerErr)
-		} else {
-			util.Logger = serviceLogger
-		}
-	}
-	if action == "install" {
-		println("Init system is:", installedService.Platform())
-	}
-	if action != "" {
-		if err := service.Control(installedService, action); err != nil {
-			log.Print(err)
-		}
-		return
-	}
-	if err := installedService.Run(); err != nil {
-		util.Logger.Error(err)
 	}
 }
 

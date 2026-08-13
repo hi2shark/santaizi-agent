@@ -1,18 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
+	"github.com/hi2shark/santaizi-agent/pkg/util"
 	"github.com/nezhahq/service"
 	"github.com/spf13/cobra"
 )
-
-type AgentCliFlags struct {
-	IsSpecified bool
-	Flag        string
-	Value       string
-}
 
 type program struct {
 	exit    chan struct{}
@@ -63,48 +58,72 @@ func servicePreRun(cmd *cobra.Command, args []string) {
 	}
 }
 
-func serviceActions(cmd *cobra.Command, args []string) {
-	var agentCliFlags []string
-
-	flags := []AgentCliFlags{
-		{agentCliParam.Server != "localhost:5555", "-s", agentCliParam.Server},
-		{agentCliParam.ClientSecret != "", "-p", agentCliParam.ClientSecret},
-		{agentCliParam.TLS, "--tls", ""},
-		{agentCliParam.InsecureTLS, "--insecure", ""},
-		{agentConfig.Debug, "-d", ""},
-		{agentCliParam.ReportDelay != 5, "--report-delay", fmt.Sprint(agentCliParam.ReportDelay)},
-		{agentCliParam.ConfigPath != "/etc/santaizi/agent.yaml", "--config", agentCliParam.ConfigPath},
-		{agentCliParam.DataDir != "/var/lib/santaizi-agent", "--data-dir", agentCliParam.DataDir},
-		{agentCliParam.DisableCPU, "--disable-cpu", ""},
-		{agentCliParam.DisableMemory, "--disable-memory", ""},
-		{agentCliParam.DisableDisk, "--disable-disk", ""},
-		{agentCliParam.DisableNetwork, "--disable-network", ""},
-		{agentCliParam.DisableConnections, "--disable-connections", ""},
-		{agentCliParam.DisableProcesses, "--disable-processes", ""},
-		{agentCliParam.EnableTemperature, "--temperature", ""},
-		{agentCliParam.EnableGPU, "--gpu", ""},
-		{agentCliParam.DisableHostInfo, "--disable-host-info", ""},
-		{agentCliParam.DisableIPReport, "--disable-ip-report", ""},
-		{agentCliParam.DisableHTTPProbe, "--disable-http-probe", ""},
-		{agentCliParam.DisableICMPProbe, "--disable-icmp-probe", ""},
-		{agentCliParam.DisableTCPProbe, "--disable-tcp-probe", ""},
-		{agentCliParam.DisableNAT, "--disable-nat", ""},
-		{agentCliParam.UseIPv6CountryCode, "--use-ipv6-countrycode", ""},
-		{agentCliParam.IPReportInterface != "", "--ip-report-interface", agentCliParam.IPReportInterface},
-		{agentCliParam.CountryCode != "", "--country-code", agentCliParam.CountryCode},
-		{agentCliParam.IPReportPeriod != 30*60, "-u", fmt.Sprint(agentCliParam.IPReportPeriod)},
+func serviceRuntimeArguments(configPath string) []string {
+	if configPath == "" {
+		configPath = "/etc/santaizi/agent.yaml"
 	}
+	return []string{"--config", configPath}
+}
 
-	for _, f := range flags {
-		if f.IsSpecified {
-			if f.Value == "" {
-				agentCliFlags = append(agentCliFlags, f.Flag)
-			} else {
-				agentCliFlags = append(agentCliFlags, f.Flag, f.Value)
-			}
+func serviceActions(cmd *cobra.Command, args []string) {
+	action := args[0]
+	var flags []string
+	if action == "install" {
+		if err := persistRuntimeConfig(); err != nil {
+			log.Printf("写入配置文件失败: %v", err)
+			os.Exit(1)
+		}
+		flags = serviceRuntimeArguments(agentCliParam.ConfigPath)
+	}
+	if err := runService(action, flags); err != nil && action != "" {
+		os.Exit(1)
+	}
+}
+
+func runService(action string, flags []string) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		printf("获取当前工作目录失败: %v", err)
+		return err
+	}
+	config := &service.Config{
+		Name: "santaizi-agent", DisplayName: "Santaizi Agent", Description: "三太子探针监控端",
+		Arguments: flags, WorkingDirectory: dir, Option: map[string]interface{}{"OnFailure": "restart"},
+	}
+	program := &program{exit: make(chan struct{})}
+	installedService, err := service.New(program, config)
+	if err != nil {
+		printf("创建系统服务失败，以前台模式运行: %v", err)
+		run()
+		return err
+	}
+	program.service = installedService
+	if agentConfig.Debug {
+		serviceLogger, loggerErr := installedService.Logger(nil)
+		if loggerErr != nil {
+			printf("获取系统服务日志器失败: %v", loggerErr)
+		} else {
+			util.Logger = serviceLogger
 		}
 	}
-
-	action := args[0]
-	runService(action, agentCliFlags)
+	if action == "install" {
+		println("Init system is:", installedService.Platform())
+	}
+	if action != "" {
+		if err := service.Control(installedService, action); err != nil {
+			log.Print(err)
+			return err
+		}
+		if action == "install" {
+			if err := installUninstallWrapper(); err != nil {
+				printf("注册卸载命令失败（服务已安装）: %v", err)
+			}
+		}
+		return nil
+	}
+	if err := installedService.Run(); err != nil {
+		util.Logger.Error(err)
+		return err
+	}
+	return nil
 }
