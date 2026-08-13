@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+
+	"github.com/hi2shark/santaizi-agent/pkg/util"
 )
 
 const identityFileName = "identity"
@@ -93,12 +95,7 @@ func writeAtomic(path string, data []byte) error {
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("install identity file: %w", err)
 	}
-	d, err := os.Open(dir)
-	if err == nil {
-		err = d.Sync()
-		_ = d.Close()
-	}
-	return err
+	return util.SyncDir(dir)
 }
 
 func EventID(nodeID, sessionID ID, sequence uint64) ID {

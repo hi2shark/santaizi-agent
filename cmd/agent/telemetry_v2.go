@@ -18,6 +18,7 @@ import (
 	"github.com/hi2shark/santaizi-agent/model"
 	"github.com/hi2shark/santaizi-agent/pkg/identity"
 	"github.com/hi2shark/santaizi-agent/pkg/monitor"
+	"github.com/hi2shark/santaizi-agent/pkg/util"
 	"github.com/hi2shark/santaizi-agent/pkg/wal"
 	pb "github.com/hi2shark/santaizi-agent/proto"
 	"google.golang.org/grpc"
@@ -1047,10 +1048,5 @@ func writeCredential(path string, credential *pb.SignedAgentCredential) error {
 	if err := os.Rename(tmpPath, path); err != nil {
 		return err
 	}
-	dir, err := os.Open(filepath.Dir(path))
-	if err == nil {
-		err = dir.Sync()
-		_ = dir.Close()
-	}
-	return err
+	return util.SyncDir(filepath.Dir(path))
 }

@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/hi2shark/santaizi-agent/pkg/util"
 )
 
 type EndpointState struct {
@@ -159,10 +161,5 @@ func (s *StateStore) saveLocked() error {
 	if err := os.Rename(tmpPath, s.path); err != nil {
 		return err
 	}
-	dir, err := os.Open(filepath.Dir(s.path))
-	if err == nil {
-		err = dir.Sync()
-		_ = dir.Close()
-	}
-	return err
+	return util.SyncDir(filepath.Dir(s.path))
 }
