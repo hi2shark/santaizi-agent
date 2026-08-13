@@ -3,6 +3,7 @@ package model
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -89,7 +90,9 @@ func TestAgentConfigRoundTripConnectionSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm() != 0600 {
+	// Windows only honors the owner-write bit; Stat reports 0666 for a
+	// writable file even when WriteFile was called with 0600.
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Fatalf("config mode=%v", info.Mode().Perm())
 	}
 
