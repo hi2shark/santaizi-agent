@@ -311,6 +311,9 @@ func run() {
 	}()
 
 	auth := model.AuthHandler{ClientSecret: agentCliParam.ClientSecret}
+	if agentConfig.Capabilities.IPReport {
+		go monitor.UpdateIP(agentCliParam.UseIPv6CountryCode, agentCliParam.IPReportPeriod)
+	}
 	manager, err := startV2Telemetry(ctx, auth)
 	if err != nil {
 		printf("启动可靠探测失败: %v", err)
@@ -321,9 +324,6 @@ func run() {
 			printf("关闭可靠探测失败: %v", err)
 		}
 	}()
-	if agentConfig.Capabilities.IPReport {
-		go monitor.UpdateIP(agentCliParam.UseIPv6CountryCode, agentCliParam.IPReportPeriod)
-	}
 	<-ctx.Done()
 }
 

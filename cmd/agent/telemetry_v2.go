@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,16 +23,21 @@ import (
 	"github.com/hi2shark/santaizi-agent/pkg/wal"
 	pb "github.com/hi2shark/santaizi-agent/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
 const telemetryProtocolVersion = "2"
+const sinkRTTInterval = 15 * time.Second
 
 type endpointWorker struct {
-	endpoint *pb.TelemetryEndpoint
-	cancel   context.CancelFunc
+	endpoint     *pb.TelemetryEndpoint
+	cancel       context.CancelFunc
+	pingDisabled bool
+	lastRTTAt    time.Time
 }
 
 type telemetryManager struct {
@@ -188,6 +194,7 @@ func (m *telemetryManager) collectLoop() {
 			} else if err != nil && !errors.Is(err, wal.ErrDownsampled) {
 				printf("追加状态探测失败: %v", err)
 			}
+			m.flushHostIfIPChanged()
 		case <-heartbeatTicker.C:
 			host := m.snapshotHost()
 			event, err := m.appendEvent(pb.TelemetryEventType_TELEMETRY_EVENT_TYPE_HEARTBEAT, pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL,
@@ -197,15 +204,7 @@ func (m *telemetryManager) collectLoop() {
 				m.appendFailedEventGap(event, "heartbeat WAL append failed")
 			}
 		case <-hostTicker.C:
-			host := collectHost()
-			m.mu.Lock()
-			m.latestHost = host
-			m.mu.Unlock()
-			if event, err := m.appendEvent(pb.TelemetryEventType_TELEMETRY_EVENT_TYPE_HOST, pb.TelemetryPriority_TELEMETRY_PRIORITY_P1_IMPORTANT,
-				eventPayload(&pb.TelemetryEvent_Host{Host: host})); err != nil {
-				printf("追加主机探测失败: %v", err)
-				m.appendFailedEventGap(event, "host WAL append failed")
-			}
+			m.publishHost(m.nextHost())
 		case <-gcTicker.C:
 			if _, err := m.wal.Reclaim(m.recordAcknowledgedByAll); err != nil {
 				printf("回收探测 WAL 失败: %v", err)
@@ -361,7 +360,50 @@ func (m *telemetryManager) appendExplicitGap(nodeUUID, sessionID []byte, start, 
 func (m *telemetryManager) snapshotHost() *pb.Host {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return proto.Clone(m.latestHost).(*pb.Host)
+	return cloneHost(m.latestHost)
+}
+
+func (m *telemetryManager) previousHostIP() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.latestHost.GetIp()
+}
+
+func (m *telemetryManager) nextHost() *pb.Host {
+	return retainKnownHostIP(collectHost(), m.previousHostIP())
+}
+
+func (m *telemetryManager) publishHost(host *pb.Host) {
+	m.mu.Lock()
+	m.latestHost = host
+	m.mu.Unlock()
+	if event, err := m.appendEvent(pb.TelemetryEventType_TELEMETRY_EVENT_TYPE_HOST, pb.TelemetryPriority_TELEMETRY_PRIORITY_P1_IMPORTANT,
+		eventPayload(&pb.TelemetryEvent_Host{Host: host})); err != nil {
+		printf("追加主机探测失败: %v", err)
+		m.appendFailedEventGap(event, "host WAL append failed")
+	}
+}
+
+func (m *telemetryManager) flushHostIfIPChanged() {
+	if !agentConfig.Capabilities.IPReport {
+		return
+	}
+	cached := strings.TrimSpace(monitor.CachedIP)
+	if cached == "" || cached == strings.TrimSpace(m.previousHostIP()) {
+		return
+	}
+	m.publishHost(m.nextHost())
+}
+
+func retainKnownHostIP(host *pb.Host, previousIP string) *pb.Host {
+	if host == nil {
+		return nil
+	}
+	if strings.TrimSpace(host.GetIp()) != "" || strings.TrimSpace(previousIP) == "" {
+		return host
+	}
+	host.Ip = previousIP
+	return host
 }
 
 type pressureStateRollup struct {
@@ -684,7 +726,7 @@ func (m *telemetryManager) sinkLoop(ctx context.Context, worker *endpointWorker)
 		if ctx.Err() != nil {
 			return
 		}
-		if err := m.sinkOnce(ctx, worker.endpoint); err != nil && !errors.Is(err, context.Canceled) {
+		if err := m.sinkOnce(ctx, worker); err != nil && !errors.Is(err, context.Canceled) {
 			m.setSinkError(worker.endpoint, err)
 		}
 		select {
@@ -695,7 +737,8 @@ func (m *telemetryManager) sinkLoop(ctx context.Context, worker *endpointWorker)
 	}
 }
 
-func (m *telemetryManager) sinkOnce(ctx context.Context, endpoint *pb.TelemetryEndpoint) error {
+func (m *telemetryManager) sinkOnce(ctx context.Context, worker *endpointWorker) error {
+	endpoint := worker.endpoint
 	conn, err := grpc.NewClient(endpoint.GetAddress(), m.dialOptions(endpoint.GetTls(), endpoint.GetInsecureTls(), false)...)
 	if err != nil {
 		return err
@@ -733,8 +776,12 @@ func (m *telemetryManager) sinkOnce(ctx context.Context, endpoint *pb.TelemetryE
 						return err
 					}
 				}
+				if err := m.maybePingSink(stream, worker); err != nil {
+					return err
+				}
 				continue
 			}
+			sent := time.Now()
 			if err := stream.Send(&pb.TelemetryRequest{Body: &pb.TelemetryRequest_Batch{Batch: &pb.TelemetryBatch{Records: records}}}); err != nil {
 				return err
 			}
@@ -748,6 +795,7 @@ func (m *telemetryManager) sinkOnce(ctx context.Context, endpoint *pb.TelemetryE
 			if response.GetError() != "" {
 				return errors.New(response.GetError())
 			}
+			m.recordSinkRTT(worker, time.Since(sent))
 			for _, ack := range response.GetAcks() {
 				if !bytes.Equal(ack.GetNodeUuid(), m.nodeID[:]) {
 					continue
@@ -759,6 +807,48 @@ func (m *telemetryManager) sinkOnce(ctx context.Context, endpoint *pb.TelemetryE
 			}
 		}
 	}
+}
+
+func (m *telemetryManager) maybePingSink(stream grpc.BidiStreamingClient[pb.TelemetryRequest, pb.TelemetryResponse], worker *endpointWorker) error {
+	if worker.pingDisabled || time.Since(worker.lastRTTAt) < sinkRTTInterval {
+		return nil
+	}
+	sent := time.Now()
+	if err := stream.Send(&pb.TelemetryRequest{Body: &pb.TelemetryRequest_Ping{Ping: &pb.TelemetryPing{}}}); err != nil {
+		return err
+	}
+	response, err := stream.Recv()
+	if err != nil {
+		if pingUnsupported(err) {
+			worker.pingDisabled = true
+		}
+		if errors.Is(err, io.EOF) {
+			return io.ErrUnexpectedEOF
+		}
+		return err
+	}
+	if response.GetError() != "" {
+		return errors.New(response.GetError())
+	}
+	m.recordSinkRTT(worker, time.Since(sent))
+	return nil
+}
+
+func (m *telemetryManager) recordSinkRTT(worker *endpointWorker, rtt time.Duration) {
+	worker.lastRTTAt = time.Now()
+	m.setSinkRTT(worker.endpoint, rtt)
+}
+
+func pingUnsupported(err error) bool {
+	code := status.Code(err)
+	return code == codes.InvalidArgument || code == codes.Unimplemented
+}
+
+func durationMilliseconds(d time.Duration) float64 {
+	if d < 0 {
+		return 0
+	}
+	return float64(d) / float64(time.Millisecond)
 }
 
 func (m *telemetryManager) pendingFor(endpointID string, limit int) ([]*pb.TelemetryRecord, error) {
@@ -964,6 +1054,15 @@ func (m *telemetryManager) setSinkAck(endpoint *pb.TelemetryEndpoint, ack uint64
 	defer m.mu.Unlock()
 	if runtime := m.sinkRuntime[endpoint.GetEndpointId()]; runtime != nil && ack > runtime.AckThrough {
 		runtime.AckThrough = ack
+	}
+}
+
+func (m *telemetryManager) setSinkRTT(endpoint *pb.TelemetryEndpoint, rtt time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if runtime := m.sinkRuntime[endpoint.GetEndpointId()]; runtime != nil && runtime.GetGeneration() == endpoint.GetGeneration() {
+		runtime.LastRttMs = durationMilliseconds(rtt)
+		runtime.RttSampledAtUnixNano = time.Now().UnixNano()
 	}
 }
 
