@@ -231,11 +231,16 @@ message RealtimeSnapshot {
     AgentRuntime agent_runtime = 8;
 }
 
+message TelemetryPing {}
+
+message TelemetryPong {}
+
 message TelemetryRequest {
     oneof body {
         TelemetryHello hello = 1;
         TelemetryBatch batch = 2;
         RealtimeSnapshot realtime_snapshot = 3;
+        TelemetryPing ping = 4;
     }
 }
 
@@ -249,6 +254,7 @@ message TelemetryResponse {
     repeated SessionAck acks = 1;
     repeated bytes accepted_gap_ids = 2;
     string error = 3;
+    TelemetryPong pong = 4;
 }
 
 message SinkRuntime {
@@ -259,6 +265,8 @@ message SinkRuntime {
     uint64 pending_events = 5;
     int64 oldest_pending_unix_nano = 6;
     string last_error = 7;
+    double last_rtt_ms = 8;
+    int64 rtt_sampled_at_unix_nano = 9;
 }
 
 message AgentRuntime {
@@ -420,6 +428,10 @@ message CollectorRuntime {
     uint64 connected_agents = 7;
     string protocol_version = 8;
     int64 last_primary_seen_unix_nano = 9;
+    double heartbeat_rtt_ms = 10;
+    int64 heartbeat_rtt_sampled_at_unix_nano = 11;
+    double replication_rtt_ms = 12;
+    int64 replication_rtt_sampled_at_unix_nano = 13;
 }
 
 message ReplicationBatch {

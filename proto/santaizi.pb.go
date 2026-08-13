@@ -1698,6 +1698,78 @@ func (x *RealtimeSnapshot) GetAgentRuntime() *AgentRuntime {
 	return nil
 }
 
+type TelemetryPing struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TelemetryPing) Reset() {
+	*x = TelemetryPing{}
+	mi := &file_proto_santaizi_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TelemetryPing) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TelemetryPing) ProtoMessage() {}
+
+func (x *TelemetryPing) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TelemetryPing.ProtoReflect.Descriptor instead.
+func (*TelemetryPing) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{12}
+}
+
+type TelemetryPong struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TelemetryPong) Reset() {
+	*x = TelemetryPong{}
+	mi := &file_proto_santaizi_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TelemetryPong) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TelemetryPong) ProtoMessage() {}
+
+func (x *TelemetryPong) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TelemetryPong.ProtoReflect.Descriptor instead.
+func (*TelemetryPong) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{13}
+}
+
 type TelemetryRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Body:
@@ -1705,6 +1777,7 @@ type TelemetryRequest struct {
 	//	*TelemetryRequest_Hello
 	//	*TelemetryRequest_Batch
 	//	*TelemetryRequest_RealtimeSnapshot
+	//	*TelemetryRequest_Ping
 	Body          isTelemetryRequest_Body `protobuf_oneof:"body"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1712,7 +1785,7 @@ type TelemetryRequest struct {
 
 func (x *TelemetryRequest) Reset() {
 	*x = TelemetryRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[12]
+	mi := &file_proto_santaizi_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1724,7 +1797,7 @@ func (x *TelemetryRequest) String() string {
 func (*TelemetryRequest) ProtoMessage() {}
 
 func (x *TelemetryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[12]
+	mi := &file_proto_santaizi_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1737,7 +1810,7 @@ func (x *TelemetryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TelemetryRequest.ProtoReflect.Descriptor instead.
 func (*TelemetryRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{12}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *TelemetryRequest) GetBody() isTelemetryRequest_Body {
@@ -1774,6 +1847,15 @@ func (x *TelemetryRequest) GetRealtimeSnapshot() *RealtimeSnapshot {
 	return nil
 }
 
+func (x *TelemetryRequest) GetPing() *TelemetryPing {
+	if x != nil {
+		if x, ok := x.Body.(*TelemetryRequest_Ping); ok {
+			return x.Ping
+		}
+	}
+	return nil
+}
+
 type isTelemetryRequest_Body interface {
 	isTelemetryRequest_Body()
 }
@@ -1790,11 +1872,17 @@ type TelemetryRequest_RealtimeSnapshot struct {
 	RealtimeSnapshot *RealtimeSnapshot `protobuf:"bytes,3,opt,name=realtime_snapshot,json=realtimeSnapshot,proto3,oneof"`
 }
 
+type TelemetryRequest_Ping struct {
+	Ping *TelemetryPing `protobuf:"bytes,4,opt,name=ping,proto3,oneof"`
+}
+
 func (*TelemetryRequest_Hello) isTelemetryRequest_Body() {}
 
 func (*TelemetryRequest_Batch) isTelemetryRequest_Body() {}
 
 func (*TelemetryRequest_RealtimeSnapshot) isTelemetryRequest_Body() {}
+
+func (*TelemetryRequest_Ping) isTelemetryRequest_Body() {}
 
 type SessionAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1807,7 +1895,7 @@ type SessionAck struct {
 
 func (x *SessionAck) Reset() {
 	*x = SessionAck{}
-	mi := &file_proto_santaizi_proto_msgTypes[13]
+	mi := &file_proto_santaizi_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1819,7 +1907,7 @@ func (x *SessionAck) String() string {
 func (*SessionAck) ProtoMessage() {}
 
 func (x *SessionAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[13]
+	mi := &file_proto_santaizi_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1832,7 +1920,7 @@ func (x *SessionAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SessionAck.ProtoReflect.Descriptor instead.
 func (*SessionAck) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{13}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SessionAck) GetNodeUuid() []byte {
@@ -1861,13 +1949,14 @@ type TelemetryResponse struct {
 	Acks           []*SessionAck          `protobuf:"bytes,1,rep,name=acks,proto3" json:"acks,omitempty"`
 	AcceptedGapIds [][]byte               `protobuf:"bytes,2,rep,name=accepted_gap_ids,json=acceptedGapIds,proto3" json:"accepted_gap_ids,omitempty"`
 	Error          string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Pong           *TelemetryPong         `protobuf:"bytes,4,opt,name=pong,proto3" json:"pong,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *TelemetryResponse) Reset() {
 	*x = TelemetryResponse{}
-	mi := &file_proto_santaizi_proto_msgTypes[14]
+	mi := &file_proto_santaizi_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1879,7 +1968,7 @@ func (x *TelemetryResponse) String() string {
 func (*TelemetryResponse) ProtoMessage() {}
 
 func (x *TelemetryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[14]
+	mi := &file_proto_santaizi_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1892,7 +1981,7 @@ func (x *TelemetryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TelemetryResponse.ProtoReflect.Descriptor instead.
 func (*TelemetryResponse) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{14}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TelemetryResponse) GetAcks() []*SessionAck {
@@ -1916,6 +2005,13 @@ func (x *TelemetryResponse) GetError() string {
 	return ""
 }
 
+func (x *TelemetryResponse) GetPong() *TelemetryPong {
+	if x != nil {
+		return x.Pong
+	}
+	return nil
+}
+
 type SinkRuntime struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	EndpointId            string                 `protobuf:"bytes,1,opt,name=endpoint_id,json=endpointId,proto3" json:"endpoint_id,omitempty"`
@@ -1925,13 +2021,15 @@ type SinkRuntime struct {
 	PendingEvents         uint64                 `protobuf:"varint,5,opt,name=pending_events,json=pendingEvents,proto3" json:"pending_events,omitempty"`
 	OldestPendingUnixNano int64                  `protobuf:"varint,6,opt,name=oldest_pending_unix_nano,json=oldestPendingUnixNano,proto3" json:"oldest_pending_unix_nano,omitempty"`
 	LastError             string                 `protobuf:"bytes,7,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	LastRttMs             float64                `protobuf:"fixed64,8,opt,name=last_rtt_ms,json=lastRttMs,proto3" json:"last_rtt_ms,omitempty"`
+	RttSampledAtUnixNano  int64                  `protobuf:"varint,9,opt,name=rtt_sampled_at_unix_nano,json=rttSampledAtUnixNano,proto3" json:"rtt_sampled_at_unix_nano,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
 
 func (x *SinkRuntime) Reset() {
 	*x = SinkRuntime{}
-	mi := &file_proto_santaizi_proto_msgTypes[15]
+	mi := &file_proto_santaizi_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1943,7 +2041,7 @@ func (x *SinkRuntime) String() string {
 func (*SinkRuntime) ProtoMessage() {}
 
 func (x *SinkRuntime) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[15]
+	mi := &file_proto_santaizi_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1956,7 +2054,7 @@ func (x *SinkRuntime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SinkRuntime.ProtoReflect.Descriptor instead.
 func (*SinkRuntime) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{15}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SinkRuntime) GetEndpointId() string {
@@ -2008,6 +2106,20 @@ func (x *SinkRuntime) GetLastError() string {
 	return ""
 }
 
+func (x *SinkRuntime) GetLastRttMs() float64 {
+	if x != nil {
+		return x.LastRttMs
+	}
+	return 0
+}
+
+func (x *SinkRuntime) GetRttSampledAtUnixNano() int64 {
+	if x != nil {
+		return x.RttSampledAtUnixNano
+	}
+	return 0
+}
+
 type AgentRuntime struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	WalPressure           WalPressure            `protobuf:"varint,1,opt,name=wal_pressure,json=walPressure,proto3,enum=proto.WalPressure" json:"wal_pressure,omitempty"`
@@ -2024,7 +2136,7 @@ type AgentRuntime struct {
 
 func (x *AgentRuntime) Reset() {
 	*x = AgentRuntime{}
-	mi := &file_proto_santaizi_proto_msgTypes[16]
+	mi := &file_proto_santaizi_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2036,7 +2148,7 @@ func (x *AgentRuntime) String() string {
 func (*AgentRuntime) ProtoMessage() {}
 
 func (x *AgentRuntime) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[16]
+	mi := &file_proto_santaizi_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2049,7 +2161,7 @@ func (x *AgentRuntime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentRuntime.ProtoReflect.Descriptor instead.
 func (*AgentRuntime) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{16}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *AgentRuntime) GetWalPressure() WalPressure {
@@ -2117,7 +2229,7 @@ type AgentCapabilities struct {
 
 func (x *AgentCapabilities) Reset() {
 	*x = AgentCapabilities{}
-	mi := &file_proto_santaizi_proto_msgTypes[17]
+	mi := &file_proto_santaizi_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2129,7 +2241,7 @@ func (x *AgentCapabilities) String() string {
 func (*AgentCapabilities) ProtoMessage() {}
 
 func (x *AgentCapabilities) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[17]
+	mi := &file_proto_santaizi_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2142,7 +2254,7 @@ func (x *AgentCapabilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentCapabilities.ProtoReflect.Descriptor instead.
 func (*AgentCapabilities) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{17}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *AgentCapabilities) GetEnabled() []AgentCapability {
@@ -2169,7 +2281,7 @@ type TelemetryEndpoint struct {
 
 func (x *TelemetryEndpoint) Reset() {
 	*x = TelemetryEndpoint{}
-	mi := &file_proto_santaizi_proto_msgTypes[18]
+	mi := &file_proto_santaizi_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2181,7 +2293,7 @@ func (x *TelemetryEndpoint) String() string {
 func (*TelemetryEndpoint) ProtoMessage() {}
 
 func (x *TelemetryEndpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[18]
+	mi := &file_proto_santaizi_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2194,7 +2306,7 @@ func (x *TelemetryEndpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TelemetryEndpoint.ProtoReflect.Descriptor instead.
 func (*TelemetryEndpoint) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{18}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *TelemetryEndpoint) GetEndpointId() string {
@@ -2270,7 +2382,7 @@ type EndpointAssignment struct {
 
 func (x *EndpointAssignment) Reset() {
 	*x = EndpointAssignment{}
-	mi := &file_proto_santaizi_proto_msgTypes[19]
+	mi := &file_proto_santaizi_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2282,7 +2394,7 @@ func (x *EndpointAssignment) String() string {
 func (*EndpointAssignment) ProtoMessage() {}
 
 func (x *EndpointAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[19]
+	mi := &file_proto_santaizi_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2295,7 +2407,7 @@ func (x *EndpointAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndpointAssignment.ProtoReflect.Descriptor instead.
 func (*EndpointAssignment) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{19}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *EndpointAssignment) GetConfigVersion() uint64 {
@@ -2326,7 +2438,7 @@ type AgentControlHello struct {
 
 func (x *AgentControlHello) Reset() {
 	*x = AgentControlHello{}
-	mi := &file_proto_santaizi_proto_msgTypes[20]
+	mi := &file_proto_santaizi_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2338,7 +2450,7 @@ func (x *AgentControlHello) String() string {
 func (*AgentControlHello) ProtoMessage() {}
 
 func (x *AgentControlHello) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[20]
+	mi := &file_proto_santaizi_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2351,7 +2463,7 @@ func (x *AgentControlHello) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentControlHello.ProtoReflect.Descriptor instead.
 func (*AgentControlHello) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{20}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *AgentControlHello) GetNodeUuid() []byte {
@@ -2411,7 +2523,7 @@ type AgentControlRequest struct {
 
 func (x *AgentControlRequest) Reset() {
 	*x = AgentControlRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[21]
+	mi := &file_proto_santaizi_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2423,7 +2535,7 @@ func (x *AgentControlRequest) String() string {
 func (*AgentControlRequest) ProtoMessage() {}
 
 func (x *AgentControlRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[21]
+	mi := &file_proto_santaizi_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2436,7 +2548,7 @@ func (x *AgentControlRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentControlRequest.ProtoReflect.Descriptor instead.
 func (*AgentControlRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{21}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AgentControlRequest) GetBody() isAgentControlRequest_Body {
@@ -2525,7 +2637,7 @@ type PrimaryControlResponse struct {
 
 func (x *PrimaryControlResponse) Reset() {
 	*x = PrimaryControlResponse{}
-	mi := &file_proto_santaizi_proto_msgTypes[22]
+	mi := &file_proto_santaizi_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2537,7 +2649,7 @@ func (x *PrimaryControlResponse) String() string {
 func (*PrimaryControlResponse) ProtoMessage() {}
 
 func (x *PrimaryControlResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[22]
+	mi := &file_proto_santaizi_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2550,7 +2662,7 @@ func (x *PrimaryControlResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrimaryControlResponse.ProtoReflect.Descriptor instead.
 func (*PrimaryControlResponse) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{22}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PrimaryControlResponse) GetBody() isPrimaryControlResponse_Body {
@@ -2639,7 +2751,7 @@ type ProbeRequest struct {
 
 func (x *ProbeRequest) Reset() {
 	*x = ProbeRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[23]
+	mi := &file_proto_santaizi_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2651,7 +2763,7 @@ func (x *ProbeRequest) String() string {
 func (*ProbeRequest) ProtoMessage() {}
 
 func (x *ProbeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[23]
+	mi := &file_proto_santaizi_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2664,7 +2776,7 @@ func (x *ProbeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProbeRequest.ProtoReflect.Descriptor instead.
 func (*ProbeRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{23}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ProbeRequest) GetProbeId() string {
@@ -2740,7 +2852,7 @@ type HTTPProbeRequest struct {
 
 func (x *HTTPProbeRequest) Reset() {
 	*x = HTTPProbeRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[24]
+	mi := &file_proto_santaizi_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2752,7 +2864,7 @@ func (x *HTTPProbeRequest) String() string {
 func (*HTTPProbeRequest) ProtoMessage() {}
 
 func (x *HTTPProbeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[24]
+	mi := &file_proto_santaizi_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2765,7 +2877,7 @@ func (x *HTTPProbeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HTTPProbeRequest.ProtoReflect.Descriptor instead.
 func (*HTTPProbeRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{24}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *HTTPProbeRequest) GetUrl() string {
@@ -2793,7 +2905,7 @@ type ICMPProbeRequest struct {
 
 func (x *ICMPProbeRequest) Reset() {
 	*x = ICMPProbeRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[25]
+	mi := &file_proto_santaizi_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2805,7 +2917,7 @@ func (x *ICMPProbeRequest) String() string {
 func (*ICMPProbeRequest) ProtoMessage() {}
 
 func (x *ICMPProbeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[25]
+	mi := &file_proto_santaizi_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2818,7 +2930,7 @@ func (x *ICMPProbeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ICMPProbeRequest.ProtoReflect.Descriptor instead.
 func (*ICMPProbeRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{25}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ICMPProbeRequest) GetHost() string {
@@ -2853,7 +2965,7 @@ type TCPProbeRequest struct {
 
 func (x *TCPProbeRequest) Reset() {
 	*x = TCPProbeRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[26]
+	mi := &file_proto_santaizi_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2865,7 +2977,7 @@ func (x *TCPProbeRequest) String() string {
 func (*TCPProbeRequest) ProtoMessage() {}
 
 func (x *TCPProbeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[26]
+	mi := &file_proto_santaizi_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2878,7 +2990,7 @@ func (x *TCPProbeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TCPProbeRequest.ProtoReflect.Descriptor instead.
 func (*TCPProbeRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{26}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *TCPProbeRequest) GetHost() string {
@@ -2922,7 +3034,7 @@ type ProbeResult struct {
 
 func (x *ProbeResult) Reset() {
 	*x = ProbeResult{}
-	mi := &file_proto_santaizi_proto_msgTypes[27]
+	mi := &file_proto_santaizi_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2934,7 +3046,7 @@ func (x *ProbeResult) String() string {
 func (*ProbeResult) ProtoMessage() {}
 
 func (x *ProbeResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[27]
+	mi := &file_proto_santaizi_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2947,7 +3059,7 @@ func (x *ProbeResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProbeResult.ProtoReflect.Descriptor instead.
 func (*ProbeResult) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{27}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ProbeResult) GetProbeId() string {
@@ -3059,7 +3171,7 @@ type HTTPProbeResult struct {
 
 func (x *HTTPProbeResult) Reset() {
 	*x = HTTPProbeResult{}
-	mi := &file_proto_santaizi_proto_msgTypes[28]
+	mi := &file_proto_santaizi_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3071,7 +3183,7 @@ func (x *HTTPProbeResult) String() string {
 func (*HTTPProbeResult) ProtoMessage() {}
 
 func (x *HTTPProbeResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[28]
+	mi := &file_proto_santaizi_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3084,7 +3196,7 @@ func (x *HTTPProbeResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HTTPProbeResult.ProtoReflect.Descriptor instead.
 func (*HTTPProbeResult) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{28}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *HTTPProbeResult) GetStatusCode() uint32 {
@@ -3118,7 +3230,7 @@ type ICMPProbeResult struct {
 
 func (x *ICMPProbeResult) Reset() {
 	*x = ICMPProbeResult{}
-	mi := &file_proto_santaizi_proto_msgTypes[29]
+	mi := &file_proto_santaizi_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3130,7 +3242,7 @@ func (x *ICMPProbeResult) String() string {
 func (*ICMPProbeResult) ProtoMessage() {}
 
 func (x *ICMPProbeResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[29]
+	mi := &file_proto_santaizi_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3143,7 +3255,7 @@ func (x *ICMPProbeResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ICMPProbeResult.ProtoReflect.Descriptor instead.
 func (*ICMPProbeResult) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{29}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ICMPProbeResult) GetPacketsSent() uint32 {
@@ -3169,7 +3281,7 @@ type TCPProbeResult struct {
 
 func (x *TCPProbeResult) Reset() {
 	*x = TCPProbeResult{}
-	mi := &file_proto_santaizi_proto_msgTypes[30]
+	mi := &file_proto_santaizi_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3181,7 +3293,7 @@ func (x *TCPProbeResult) String() string {
 func (*TCPProbeResult) ProtoMessage() {}
 
 func (x *TCPProbeResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[30]
+	mi := &file_proto_santaizi_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3194,7 +3306,7 @@ func (x *TCPProbeResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TCPProbeResult.ProtoReflect.Descriptor instead.
 func (*TCPProbeResult) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{30}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *TCPProbeResult) GetResolvedIp() string {
@@ -3216,7 +3328,7 @@ type NATOpenRequest struct {
 
 func (x *NATOpenRequest) Reset() {
 	*x = NATOpenRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[31]
+	mi := &file_proto_santaizi_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3228,7 +3340,7 @@ func (x *NATOpenRequest) String() string {
 func (*NATOpenRequest) ProtoMessage() {}
 
 func (x *NATOpenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[31]
+	mi := &file_proto_santaizi_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3241,7 +3353,7 @@ func (x *NATOpenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NATOpenRequest.ProtoReflect.Descriptor instead.
 func (*NATOpenRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{31}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *NATOpenRequest) GetStreamId() string {
@@ -3283,7 +3395,7 @@ type NATOpenResult struct {
 
 func (x *NATOpenResult) Reset() {
 	*x = NATOpenResult{}
-	mi := &file_proto_santaizi_proto_msgTypes[32]
+	mi := &file_proto_santaizi_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3295,7 +3407,7 @@ func (x *NATOpenResult) String() string {
 func (*NATOpenResult) ProtoMessage() {}
 
 func (x *NATOpenResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[32]
+	mi := &file_proto_santaizi_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3308,7 +3420,7 @@ func (x *NATOpenResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NATOpenResult.ProtoReflect.Descriptor instead.
 func (*NATOpenResult) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{32}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *NATOpenResult) GetStreamId() string {
@@ -3344,7 +3456,7 @@ type NATFrame struct {
 
 func (x *NATFrame) Reset() {
 	*x = NATFrame{}
-	mi := &file_proto_santaizi_proto_msgTypes[33]
+	mi := &file_proto_santaizi_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3356,7 +3468,7 @@ func (x *NATFrame) String() string {
 func (*NATFrame) ProtoMessage() {}
 
 func (x *NATFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[33]
+	mi := &file_proto_santaizi_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3369,7 +3481,7 @@ func (x *NATFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NATFrame.ProtoReflect.Descriptor instead.
 func (*NATFrame) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{33}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *NATFrame) GetStreamId() string {
@@ -3413,7 +3525,7 @@ type TelemetryObservation struct {
 
 func (x *TelemetryObservation) Reset() {
 	*x = TelemetryObservation{}
-	mi := &file_proto_santaizi_proto_msgTypes[34]
+	mi := &file_proto_santaizi_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3425,7 +3537,7 @@ func (x *TelemetryObservation) String() string {
 func (*TelemetryObservation) ProtoMessage() {}
 
 func (x *TelemetryObservation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[34]
+	mi := &file_proto_santaizi_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3438,7 +3550,7 @@ func (x *TelemetryObservation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TelemetryObservation.ProtoReflect.Descriptor instead.
 func (*TelemetryObservation) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{34}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *TelemetryObservation) GetEventId() []byte {
@@ -3488,7 +3600,7 @@ type ObserverHealthSample struct {
 
 func (x *ObserverHealthSample) Reset() {
 	*x = ObserverHealthSample{}
-	mi := &file_proto_santaizi_proto_msgTypes[35]
+	mi := &file_proto_santaizi_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3500,7 +3612,7 @@ func (x *ObserverHealthSample) String() string {
 func (*ObserverHealthSample) ProtoMessage() {}
 
 func (x *ObserverHealthSample) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[35]
+	mi := &file_proto_santaizi_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3513,7 +3625,7 @@ func (x *ObserverHealthSample) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObserverHealthSample.ProtoReflect.Descriptor instead.
 func (*ObserverHealthSample) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{35}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ObserverHealthSample) GetObserverId() string {
@@ -3545,23 +3657,27 @@ func (x *ObserverHealthSample) GetProcessSession() string {
 }
 
 type CollectorRuntime struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	CollectorUuid           string                 `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
-	SampledAtUnixNano       int64                  `protobuf:"varint,2,opt,name=sampled_at_unix_nano,json=sampledAtUnixNano,proto3" json:"sampled_at_unix_nano,omitempty"`
-	SpoolSize               uint64                 `protobuf:"varint,3,opt,name=spool_size,json=spoolSize,proto3" json:"spool_size,omitempty"`
-	PendingRecords          uint64                 `protobuf:"varint,4,opt,name=pending_records,json=pendingRecords,proto3" json:"pending_records,omitempty"`
-	OldestPendingUnixNano   int64                  `protobuf:"varint,5,opt,name=oldest_pending_unix_nano,json=oldestPendingUnixNano,proto3" json:"oldest_pending_unix_nano,omitempty"`
-	ReplicationCursor       uint64                 `protobuf:"varint,6,opt,name=replication_cursor,json=replicationCursor,proto3" json:"replication_cursor,omitempty"`
-	ConnectedAgents         uint64                 `protobuf:"varint,7,opt,name=connected_agents,json=connectedAgents,proto3" json:"connected_agents,omitempty"`
-	ProtocolVersion         string                 `protobuf:"bytes,8,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
-	LastPrimarySeenUnixNano int64                  `protobuf:"varint,9,opt,name=last_primary_seen_unix_nano,json=lastPrimarySeenUnixNano,proto3" json:"last_primary_seen_unix_nano,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state                           protoimpl.MessageState `protogen:"open.v1"`
+	CollectorUuid                   string                 `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
+	SampledAtUnixNano               int64                  `protobuf:"varint,2,opt,name=sampled_at_unix_nano,json=sampledAtUnixNano,proto3" json:"sampled_at_unix_nano,omitempty"`
+	SpoolSize                       uint64                 `protobuf:"varint,3,opt,name=spool_size,json=spoolSize,proto3" json:"spool_size,omitempty"`
+	PendingRecords                  uint64                 `protobuf:"varint,4,opt,name=pending_records,json=pendingRecords,proto3" json:"pending_records,omitempty"`
+	OldestPendingUnixNano           int64                  `protobuf:"varint,5,opt,name=oldest_pending_unix_nano,json=oldestPendingUnixNano,proto3" json:"oldest_pending_unix_nano,omitempty"`
+	ReplicationCursor               uint64                 `protobuf:"varint,6,opt,name=replication_cursor,json=replicationCursor,proto3" json:"replication_cursor,omitempty"`
+	ConnectedAgents                 uint64                 `protobuf:"varint,7,opt,name=connected_agents,json=connectedAgents,proto3" json:"connected_agents,omitempty"`
+	ProtocolVersion                 string                 `protobuf:"bytes,8,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
+	LastPrimarySeenUnixNano         int64                  `protobuf:"varint,9,opt,name=last_primary_seen_unix_nano,json=lastPrimarySeenUnixNano,proto3" json:"last_primary_seen_unix_nano,omitempty"`
+	HeartbeatRttMs                  float64                `protobuf:"fixed64,10,opt,name=heartbeat_rtt_ms,json=heartbeatRttMs,proto3" json:"heartbeat_rtt_ms,omitempty"`
+	HeartbeatRttSampledAtUnixNano   int64                  `protobuf:"varint,11,opt,name=heartbeat_rtt_sampled_at_unix_nano,json=heartbeatRttSampledAtUnixNano,proto3" json:"heartbeat_rtt_sampled_at_unix_nano,omitempty"`
+	ReplicationRttMs                float64                `protobuf:"fixed64,12,opt,name=replication_rtt_ms,json=replicationRttMs,proto3" json:"replication_rtt_ms,omitempty"`
+	ReplicationRttSampledAtUnixNano int64                  `protobuf:"varint,13,opt,name=replication_rtt_sampled_at_unix_nano,json=replicationRttSampledAtUnixNano,proto3" json:"replication_rtt_sampled_at_unix_nano,omitempty"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *CollectorRuntime) Reset() {
 	*x = CollectorRuntime{}
-	mi := &file_proto_santaizi_proto_msgTypes[36]
+	mi := &file_proto_santaizi_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3573,7 +3689,7 @@ func (x *CollectorRuntime) String() string {
 func (*CollectorRuntime) ProtoMessage() {}
 
 func (x *CollectorRuntime) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[36]
+	mi := &file_proto_santaizi_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3586,7 +3702,7 @@ func (x *CollectorRuntime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorRuntime.ProtoReflect.Descriptor instead.
 func (*CollectorRuntime) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{36}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *CollectorRuntime) GetCollectorUuid() string {
@@ -3652,6 +3768,34 @@ func (x *CollectorRuntime) GetLastPrimarySeenUnixNano() int64 {
 	return 0
 }
 
+func (x *CollectorRuntime) GetHeartbeatRttMs() float64 {
+	if x != nil {
+		return x.HeartbeatRttMs
+	}
+	return 0
+}
+
+func (x *CollectorRuntime) GetHeartbeatRttSampledAtUnixNano() int64 {
+	if x != nil {
+		return x.HeartbeatRttSampledAtUnixNano
+	}
+	return 0
+}
+
+func (x *CollectorRuntime) GetReplicationRttMs() float64 {
+	if x != nil {
+		return x.ReplicationRttMs
+	}
+	return 0
+}
+
+func (x *CollectorRuntime) GetReplicationRttSampledAtUnixNano() int64 {
+	if x != nil {
+		return x.ReplicationRttSampledAtUnixNano
+	}
+	return 0
+}
+
 type ReplicationBatch struct {
 	state              protoimpl.MessageState   `protogen:"open.v1"`
 	CollectorUuid      string                   `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
@@ -3670,7 +3814,7 @@ type ReplicationBatch struct {
 
 func (x *ReplicationBatch) Reset() {
 	*x = ReplicationBatch{}
-	mi := &file_proto_santaizi_proto_msgTypes[37]
+	mi := &file_proto_santaizi_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3682,7 +3826,7 @@ func (x *ReplicationBatch) String() string {
 func (*ReplicationBatch) ProtoMessage() {}
 
 func (x *ReplicationBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[37]
+	mi := &file_proto_santaizi_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3695,7 +3839,7 @@ func (x *ReplicationBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplicationBatch.ProtoReflect.Descriptor instead.
 func (*ReplicationBatch) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{37}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ReplicationBatch) GetCollectorUuid() string {
@@ -3784,7 +3928,7 @@ type CollectorDataLossFact struct {
 
 func (x *CollectorDataLossFact) Reset() {
 	*x = CollectorDataLossFact{}
-	mi := &file_proto_santaizi_proto_msgTypes[38]
+	mi := &file_proto_santaizi_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3796,7 +3940,7 @@ func (x *CollectorDataLossFact) String() string {
 func (*CollectorDataLossFact) ProtoMessage() {}
 
 func (x *CollectorDataLossFact) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[38]
+	mi := &file_proto_santaizi_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3809,7 +3953,7 @@ func (x *CollectorDataLossFact) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorDataLossFact.ProtoReflect.Descriptor instead.
 func (*CollectorDataLossFact) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{38}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *CollectorDataLossFact) GetFactId() []byte {
@@ -3881,7 +4025,7 @@ type ReplicationAck struct {
 
 func (x *ReplicationAck) Reset() {
 	*x = ReplicationAck{}
-	mi := &file_proto_santaizi_proto_msgTypes[39]
+	mi := &file_proto_santaizi_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3893,7 +4037,7 @@ func (x *ReplicationAck) String() string {
 func (*ReplicationAck) ProtoMessage() {}
 
 func (x *ReplicationAck) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[39]
+	mi := &file_proto_santaizi_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3906,7 +4050,7 @@ func (x *ReplicationAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplicationAck.ProtoReflect.Descriptor instead.
 func (*ReplicationAck) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{39}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ReplicationAck) GetCollectorUuid() string {
@@ -3954,7 +4098,7 @@ type RegisterCollectorRequest struct {
 
 func (x *RegisterCollectorRequest) Reset() {
 	*x = RegisterCollectorRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[40]
+	mi := &file_proto_santaizi_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3966,7 +4110,7 @@ func (x *RegisterCollectorRequest) String() string {
 func (*RegisterCollectorRequest) ProtoMessage() {}
 
 func (x *RegisterCollectorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[40]
+	mi := &file_proto_santaizi_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3979,7 +4123,7 @@ func (x *RegisterCollectorRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterCollectorRequest.ProtoReflect.Descriptor instead.
 func (*RegisterCollectorRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{40}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *RegisterCollectorRequest) GetRegistrationToken() string {
@@ -4008,7 +4152,7 @@ type RegisterCollectorResponse struct {
 
 func (x *RegisterCollectorResponse) Reset() {
 	*x = RegisterCollectorResponse{}
-	mi := &file_proto_santaizi_proto_msgTypes[41]
+	mi := &file_proto_santaizi_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4020,7 +4164,7 @@ func (x *RegisterCollectorResponse) String() string {
 func (*RegisterCollectorResponse) ProtoMessage() {}
 
 func (x *RegisterCollectorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[41]
+	mi := &file_proto_santaizi_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4033,7 +4177,7 @@ func (x *RegisterCollectorResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterCollectorResponse.ProtoReflect.Descriptor instead.
 func (*RegisterCollectorResponse) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{41}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *RegisterCollectorResponse) GetCollectorUuid() string {
@@ -4076,7 +4220,7 @@ type CollectorSyncHello struct {
 
 func (x *CollectorSyncHello) Reset() {
 	*x = CollectorSyncHello{}
-	mi := &file_proto_santaizi_proto_msgTypes[42]
+	mi := &file_proto_santaizi_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4088,7 +4232,7 @@ func (x *CollectorSyncHello) String() string {
 func (*CollectorSyncHello) ProtoMessage() {}
 
 func (x *CollectorSyncHello) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[42]
+	mi := &file_proto_santaizi_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4101,7 +4245,7 @@ func (x *CollectorSyncHello) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSyncHello.ProtoReflect.Descriptor instead.
 func (*CollectorSyncHello) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{42}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *CollectorSyncHello) GetCollectorUuid() string {
@@ -4146,7 +4290,7 @@ type NodeAssignment struct {
 
 func (x *NodeAssignment) Reset() {
 	*x = NodeAssignment{}
-	mi := &file_proto_santaizi_proto_msgTypes[43]
+	mi := &file_proto_santaizi_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4158,7 +4302,7 @@ func (x *NodeAssignment) String() string {
 func (*NodeAssignment) ProtoMessage() {}
 
 func (x *NodeAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[43]
+	mi := &file_proto_santaizi_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4171,7 +4315,7 @@ func (x *NodeAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeAssignment.ProtoReflect.Descriptor instead.
 func (*NodeAssignment) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{43}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *NodeAssignment) GetNodeUuid() []byte {
@@ -4229,7 +4373,7 @@ type CollectorAuthorizationConfig struct {
 
 func (x *CollectorAuthorizationConfig) Reset() {
 	*x = CollectorAuthorizationConfig{}
-	mi := &file_proto_santaizi_proto_msgTypes[44]
+	mi := &file_proto_santaizi_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4241,7 +4385,7 @@ func (x *CollectorAuthorizationConfig) String() string {
 func (*CollectorAuthorizationConfig) ProtoMessage() {}
 
 func (x *CollectorAuthorizationConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[44]
+	mi := &file_proto_santaizi_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4254,7 +4398,7 @@ func (x *CollectorAuthorizationConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorAuthorizationConfig.ProtoReflect.Descriptor instead.
 func (*CollectorAuthorizationConfig) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{44}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *CollectorAuthorizationConfig) GetConfigVersion() uint64 {
@@ -4305,7 +4449,7 @@ type CollectorSyncRequest struct {
 
 func (x *CollectorSyncRequest) Reset() {
 	*x = CollectorSyncRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[45]
+	mi := &file_proto_santaizi_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4317,7 +4461,7 @@ func (x *CollectorSyncRequest) String() string {
 func (*CollectorSyncRequest) ProtoMessage() {}
 
 func (x *CollectorSyncRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[45]
+	mi := &file_proto_santaizi_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4330,7 +4474,7 @@ func (x *CollectorSyncRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSyncRequest.ProtoReflect.Descriptor instead.
 func (*CollectorSyncRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{45}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *CollectorSyncRequest) GetBody() isCollectorSyncRequest_Body {
@@ -4387,7 +4531,7 @@ type CollectorSyncResponse struct {
 
 func (x *CollectorSyncResponse) Reset() {
 	*x = CollectorSyncResponse{}
-	mi := &file_proto_santaizi_proto_msgTypes[46]
+	mi := &file_proto_santaizi_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4399,7 +4543,7 @@ func (x *CollectorSyncResponse) String() string {
 func (*CollectorSyncResponse) ProtoMessage() {}
 
 func (x *CollectorSyncResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[46]
+	mi := &file_proto_santaizi_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4412,7 +4556,7 @@ func (x *CollectorSyncResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSyncResponse.ProtoReflect.Descriptor instead.
 func (*CollectorSyncResponse) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{46}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *CollectorSyncResponse) GetBody() isCollectorSyncResponse_Body {
@@ -4465,7 +4609,7 @@ type CollectorStatusRequest struct {
 
 func (x *CollectorStatusRequest) Reset() {
 	*x = CollectorStatusRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[47]
+	mi := &file_proto_santaizi_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4477,7 +4621,7 @@ func (x *CollectorStatusRequest) String() string {
 func (*CollectorStatusRequest) ProtoMessage() {}
 
 func (x *CollectorStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[47]
+	mi := &file_proto_santaizi_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4490,7 +4634,7 @@ func (x *CollectorStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorStatusRequest.ProtoReflect.Descriptor instead.
 func (*CollectorStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{47}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *CollectorStatusRequest) GetAuthorization() string {
@@ -4515,7 +4659,7 @@ type CollectorStatus struct {
 
 func (x *CollectorStatus) Reset() {
 	*x = CollectorStatus{}
-	mi := &file_proto_santaizi_proto_msgTypes[48]
+	mi := &file_proto_santaizi_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4527,7 +4671,7 @@ func (x *CollectorStatus) String() string {
 func (*CollectorStatus) ProtoMessage() {}
 
 func (x *CollectorStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[48]
+	mi := &file_proto_santaizi_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4540,7 +4684,7 @@ func (x *CollectorStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorStatus.ProtoReflect.Descriptor instead.
 func (*CollectorStatus) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{48}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *CollectorStatus) GetConnectedAgents() uint64 {
@@ -4613,7 +4757,7 @@ type Host struct {
 
 func (x *Host) Reset() {
 	*x = Host{}
-	mi := &file_proto_santaizi_proto_msgTypes[49]
+	mi := &file_proto_santaizi_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4625,7 +4769,7 @@ func (x *Host) String() string {
 func (*Host) ProtoMessage() {}
 
 func (x *Host) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[49]
+	mi := &file_proto_santaizi_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4638,7 +4782,7 @@ func (x *Host) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Host.ProtoReflect.Descriptor instead.
 func (*Host) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{49}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *Host) GetPlatform() string {
@@ -4757,7 +4901,7 @@ type State struct {
 
 func (x *State) Reset() {
 	*x = State{}
-	mi := &file_proto_santaizi_proto_msgTypes[50]
+	mi := &file_proto_santaizi_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4769,7 +4913,7 @@ func (x *State) String() string {
 func (*State) ProtoMessage() {}
 
 func (x *State) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[50]
+	mi := &file_proto_santaizi_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4782,7 +4926,7 @@ func (x *State) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use State.ProtoReflect.Descriptor instead.
 func (*State) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{50}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *State) GetCpu() float64 {
@@ -4914,7 +5058,7 @@ type State_SensorTemperature struct {
 
 func (x *State_SensorTemperature) Reset() {
 	*x = State_SensorTemperature{}
-	mi := &file_proto_santaizi_proto_msgTypes[51]
+	mi := &file_proto_santaizi_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4926,7 +5070,7 @@ func (x *State_SensorTemperature) String() string {
 func (*State_SensorTemperature) ProtoMessage() {}
 
 func (x *State_SensorTemperature) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[51]
+	mi := &file_proto_santaizi_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4939,7 +5083,7 @@ func (x *State_SensorTemperature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use State_SensorTemperature.ProtoReflect.Descriptor instead.
 func (*State_SensorTemperature) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{51}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *State_SensorTemperature) GetName() string {
@@ -4965,7 +5109,7 @@ type Receipt struct {
 
 func (x *Receipt) Reset() {
 	*x = Receipt{}
-	mi := &file_proto_santaizi_proto_msgTypes[52]
+	mi := &file_proto_santaizi_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4977,7 +5121,7 @@ func (x *Receipt) String() string {
 func (*Receipt) ProtoMessage() {}
 
 func (x *Receipt) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[52]
+	mi := &file_proto_santaizi_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4990,7 +5134,7 @@ func (x *Receipt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Receipt.ProtoReflect.Descriptor instead.
 func (*Receipt) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{52}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *Receipt) GetProced() bool {
@@ -5010,7 +5154,7 @@ type GeoIP struct {
 
 func (x *GeoIP) Reset() {
 	*x = GeoIP{}
-	mi := &file_proto_santaizi_proto_msgTypes[53]
+	mi := &file_proto_santaizi_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5022,7 +5166,7 @@ func (x *GeoIP) String() string {
 func (*GeoIP) ProtoMessage() {}
 
 func (x *GeoIP) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[53]
+	mi := &file_proto_santaizi_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5035,7 +5179,7 @@ func (x *GeoIP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeoIP.ProtoReflect.Descriptor instead.
 func (*GeoIP) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{53}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GeoIP) GetIp() string {
@@ -5148,11 +5292,14 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\x11agent_uptime_nano\x18\x05 \x01(\x04R\x0fagentUptimeNano\x12\x1f\n" +
 	"\x04host\x18\x06 \x01(\v2\v.proto.HostR\x04host\x12\"\n" +
 	"\x05state\x18\a \x01(\v2\f.proto.StateR\x05state\x128\n" +
-	"\ragent_runtime\x18\b \x01(\v2\x13.proto.AgentRuntimeR\fagentRuntime\"\xc0\x01\n" +
+	"\ragent_runtime\x18\b \x01(\v2\x13.proto.AgentRuntimeR\fagentRuntime\"\x0f\n" +
+	"\rTelemetryPing\"\x0f\n" +
+	"\rTelemetryPong\"\xec\x01\n" +
 	"\x10TelemetryRequest\x12-\n" +
 	"\x05hello\x18\x01 \x01(\v2\x15.proto.TelemetryHelloH\x00R\x05hello\x12-\n" +
 	"\x05batch\x18\x02 \x01(\v2\x15.proto.TelemetryBatchH\x00R\x05batch\x12F\n" +
-	"\x11realtime_snapshot\x18\x03 \x01(\v2\x17.proto.RealtimeSnapshotH\x00R\x10realtimeSnapshotB\x06\n" +
+	"\x11realtime_snapshot\x18\x03 \x01(\v2\x17.proto.RealtimeSnapshotH\x00R\x10realtimeSnapshot\x12*\n" +
+	"\x04ping\x18\x04 \x01(\v2\x14.proto.TelemetryPingH\x00R\x04pingB\x06\n" +
 	"\x04body\"i\n" +
 	"\n" +
 	"SessionAck\x12\x1b\n" +
@@ -5160,11 +5307,12 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x02 \x01(\fR\tsessionId\x12\x1f\n" +
 	"\vack_through\x18\x03 \x01(\x04R\n" +
-	"ackThrough\"z\n" +
+	"ackThrough\"\xa4\x01\n" +
 	"\x11TelemetryResponse\x12%\n" +
 	"\x04acks\x18\x01 \x03(\v2\x11.proto.SessionAckR\x04acks\x12(\n" +
 	"\x10accepted_gap_ids\x18\x02 \x03(\fR\x0eacceptedGapIds\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\x8c\x02\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12(\n" +
+	"\x04pong\x18\x04 \x01(\v2\x14.proto.TelemetryPongR\x04pong\"\xe4\x02\n" +
 	"\vSinkRuntime\x12\x1f\n" +
 	"\vendpoint_id\x18\x01 \x01(\tR\n" +
 	"endpointId\x12\x1e\n" +
@@ -5177,7 +5325,9 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\x0epending_events\x18\x05 \x01(\x04R\rpendingEvents\x127\n" +
 	"\x18oldest_pending_unix_nano\x18\x06 \x01(\x03R\x15oldestPendingUnixNano\x12\x1d\n" +
 	"\n" +
-	"last_error\x18\a \x01(\tR\tlastError\"\xfe\x02\n" +
+	"last_error\x18\a \x01(\tR\tlastError\x12\x1e\n" +
+	"\vlast_rtt_ms\x18\b \x01(\x01R\tlastRttMs\x126\n" +
+	"\x18rtt_sampled_at_unix_nano\x18\t \x01(\x03R\x14rttSampledAtUnixNano\"\xfe\x02\n" +
 	"\fAgentRuntime\x125\n" +
 	"\fwal_pressure\x18\x01 \x01(\x0e2\x12.proto.WalPressureR\vwalPressure\x12\x1b\n" +
 	"\twal_bytes\x18\x02 \x01(\x04R\bwalBytes\x12%\n" +
@@ -5304,7 +5454,7 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"observerId\x12/\n" +
 	"\x14sampled_at_unix_nano\x18\x02 \x01(\x03R\x11sampledAtUnixNano\x12\x18\n" +
 	"\ahealthy\x18\x03 \x01(\bR\ahealthy\x12'\n" +
-	"\x0fprocess_session\x18\x04 \x01(\tR\x0eprocessSession\"\xae\x03\n" +
+	"\x0fprocess_session\x18\x04 \x01(\tR\x0eprocessSession\"\xa0\x05\n" +
 	"\x10CollectorRuntime\x12%\n" +
 	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12/\n" +
 	"\x14sampled_at_unix_nano\x18\x02 \x01(\x03R\x11sampledAtUnixNano\x12\x1d\n" +
@@ -5315,7 +5465,12 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\x12replication_cursor\x18\x06 \x01(\x04R\x11replicationCursor\x12)\n" +
 	"\x10connected_agents\x18\a \x01(\x04R\x0fconnectedAgents\x12)\n" +
 	"\x10protocol_version\x18\b \x01(\tR\x0fprotocolVersion\x12<\n" +
-	"\x1blast_primary_seen_unix_nano\x18\t \x01(\x03R\x17lastPrimarySeenUnixNano\"\xf6\x03\n" +
+	"\x1blast_primary_seen_unix_nano\x18\t \x01(\x03R\x17lastPrimarySeenUnixNano\x12(\n" +
+	"\x10heartbeat_rtt_ms\x18\n" +
+	" \x01(\x01R\x0eheartbeatRttMs\x12I\n" +
+	"\"heartbeat_rtt_sampled_at_unix_nano\x18\v \x01(\x03R\x1dheartbeatRttSampledAtUnixNano\x12,\n" +
+	"\x12replication_rtt_ms\x18\f \x01(\x01R\x10replicationRttMs\x12M\n" +
+	"$replication_rtt_sampled_at_unix_nano\x18\r \x01(\x03R\x1freplicationRttSampledAtUnixNano\"\xf6\x03\n" +
 	"\x10ReplicationBatch\x12%\n" +
 	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12/\n" +
 	"\x13replication_session\x18\x02 \x01(\fR\x12replicationSession\x12%\n" +
@@ -5537,7 +5692,7 @@ func file_proto_santaizi_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_santaizi_proto_enumTypes = make([]protoimpl.EnumInfo, 11)
-var file_proto_santaizi_proto_msgTypes = make([]protoimpl.MessageInfo, 54)
+var file_proto_santaizi_proto_msgTypes = make([]protoimpl.MessageInfo, 56)
 var file_proto_santaizi_proto_goTypes = []any{
 	(TelemetryEventType)(0),              // 0: proto.TelemetryEventType
 	(TelemetryPriority)(0),               // 1: proto.TelemetryPriority
@@ -5562,48 +5717,50 @@ var file_proto_santaizi_proto_goTypes = []any{
 	(*TelemetryHello)(nil),               // 20: proto.TelemetryHello
 	(*TelemetryBatch)(nil),               // 21: proto.TelemetryBatch
 	(*RealtimeSnapshot)(nil),             // 22: proto.RealtimeSnapshot
-	(*TelemetryRequest)(nil),             // 23: proto.TelemetryRequest
-	(*SessionAck)(nil),                   // 24: proto.SessionAck
-	(*TelemetryResponse)(nil),            // 25: proto.TelemetryResponse
-	(*SinkRuntime)(nil),                  // 26: proto.SinkRuntime
-	(*AgentRuntime)(nil),                 // 27: proto.AgentRuntime
-	(*AgentCapabilities)(nil),            // 28: proto.AgentCapabilities
-	(*TelemetryEndpoint)(nil),            // 29: proto.TelemetryEndpoint
-	(*EndpointAssignment)(nil),           // 30: proto.EndpointAssignment
-	(*AgentControlHello)(nil),            // 31: proto.AgentControlHello
-	(*AgentControlRequest)(nil),          // 32: proto.AgentControlRequest
-	(*PrimaryControlResponse)(nil),       // 33: proto.PrimaryControlResponse
-	(*ProbeRequest)(nil),                 // 34: proto.ProbeRequest
-	(*HTTPProbeRequest)(nil),             // 35: proto.HTTPProbeRequest
-	(*ICMPProbeRequest)(nil),             // 36: proto.ICMPProbeRequest
-	(*TCPProbeRequest)(nil),              // 37: proto.TCPProbeRequest
-	(*ProbeResult)(nil),                  // 38: proto.ProbeResult
-	(*HTTPProbeResult)(nil),              // 39: proto.HTTPProbeResult
-	(*ICMPProbeResult)(nil),              // 40: proto.ICMPProbeResult
-	(*TCPProbeResult)(nil),               // 41: proto.TCPProbeResult
-	(*NATOpenRequest)(nil),               // 42: proto.NATOpenRequest
-	(*NATOpenResult)(nil),                // 43: proto.NATOpenResult
-	(*NATFrame)(nil),                     // 44: proto.NATFrame
-	(*TelemetryObservation)(nil),         // 45: proto.TelemetryObservation
-	(*ObserverHealthSample)(nil),         // 46: proto.ObserverHealthSample
-	(*CollectorRuntime)(nil),             // 47: proto.CollectorRuntime
-	(*ReplicationBatch)(nil),             // 48: proto.ReplicationBatch
-	(*CollectorDataLossFact)(nil),        // 49: proto.CollectorDataLossFact
-	(*ReplicationAck)(nil),               // 50: proto.ReplicationAck
-	(*RegisterCollectorRequest)(nil),     // 51: proto.RegisterCollectorRequest
-	(*RegisterCollectorResponse)(nil),    // 52: proto.RegisterCollectorResponse
-	(*CollectorSyncHello)(nil),           // 53: proto.CollectorSyncHello
-	(*NodeAssignment)(nil),               // 54: proto.NodeAssignment
-	(*CollectorAuthorizationConfig)(nil), // 55: proto.CollectorAuthorizationConfig
-	(*CollectorSyncRequest)(nil),         // 56: proto.CollectorSyncRequest
-	(*CollectorSyncResponse)(nil),        // 57: proto.CollectorSyncResponse
-	(*CollectorStatusRequest)(nil),       // 58: proto.CollectorStatusRequest
-	(*CollectorStatus)(nil),              // 59: proto.CollectorStatus
-	(*Host)(nil),                         // 60: proto.Host
-	(*State)(nil),                        // 61: proto.State
-	(*State_SensorTemperature)(nil),      // 62: proto.State_SensorTemperature
-	(*Receipt)(nil),                      // 63: proto.Receipt
-	(*GeoIP)(nil),                        // 64: proto.GeoIP
+	(*TelemetryPing)(nil),                // 23: proto.TelemetryPing
+	(*TelemetryPong)(nil),                // 24: proto.TelemetryPong
+	(*TelemetryRequest)(nil),             // 25: proto.TelemetryRequest
+	(*SessionAck)(nil),                   // 26: proto.SessionAck
+	(*TelemetryResponse)(nil),            // 27: proto.TelemetryResponse
+	(*SinkRuntime)(nil),                  // 28: proto.SinkRuntime
+	(*AgentRuntime)(nil),                 // 29: proto.AgentRuntime
+	(*AgentCapabilities)(nil),            // 30: proto.AgentCapabilities
+	(*TelemetryEndpoint)(nil),            // 31: proto.TelemetryEndpoint
+	(*EndpointAssignment)(nil),           // 32: proto.EndpointAssignment
+	(*AgentControlHello)(nil),            // 33: proto.AgentControlHello
+	(*AgentControlRequest)(nil),          // 34: proto.AgentControlRequest
+	(*PrimaryControlResponse)(nil),       // 35: proto.PrimaryControlResponse
+	(*ProbeRequest)(nil),                 // 36: proto.ProbeRequest
+	(*HTTPProbeRequest)(nil),             // 37: proto.HTTPProbeRequest
+	(*ICMPProbeRequest)(nil),             // 38: proto.ICMPProbeRequest
+	(*TCPProbeRequest)(nil),              // 39: proto.TCPProbeRequest
+	(*ProbeResult)(nil),                  // 40: proto.ProbeResult
+	(*HTTPProbeResult)(nil),              // 41: proto.HTTPProbeResult
+	(*ICMPProbeResult)(nil),              // 42: proto.ICMPProbeResult
+	(*TCPProbeResult)(nil),               // 43: proto.TCPProbeResult
+	(*NATOpenRequest)(nil),               // 44: proto.NATOpenRequest
+	(*NATOpenResult)(nil),                // 45: proto.NATOpenResult
+	(*NATFrame)(nil),                     // 46: proto.NATFrame
+	(*TelemetryObservation)(nil),         // 47: proto.TelemetryObservation
+	(*ObserverHealthSample)(nil),         // 48: proto.ObserverHealthSample
+	(*CollectorRuntime)(nil),             // 49: proto.CollectorRuntime
+	(*ReplicationBatch)(nil),             // 50: proto.ReplicationBatch
+	(*CollectorDataLossFact)(nil),        // 51: proto.CollectorDataLossFact
+	(*ReplicationAck)(nil),               // 52: proto.ReplicationAck
+	(*RegisterCollectorRequest)(nil),     // 53: proto.RegisterCollectorRequest
+	(*RegisterCollectorResponse)(nil),    // 54: proto.RegisterCollectorResponse
+	(*CollectorSyncHello)(nil),           // 55: proto.CollectorSyncHello
+	(*NodeAssignment)(nil),               // 56: proto.NodeAssignment
+	(*CollectorAuthorizationConfig)(nil), // 57: proto.CollectorAuthorizationConfig
+	(*CollectorSyncRequest)(nil),         // 58: proto.CollectorSyncRequest
+	(*CollectorSyncResponse)(nil),        // 59: proto.CollectorSyncResponse
+	(*CollectorStatusRequest)(nil),       // 60: proto.CollectorStatusRequest
+	(*CollectorStatus)(nil),              // 61: proto.CollectorStatus
+	(*Host)(nil),                         // 62: proto.Host
+	(*State)(nil),                        // 63: proto.State
+	(*State_SensorTemperature)(nil),      // 64: proto.State_SensorTemperature
+	(*Receipt)(nil),                      // 65: proto.Receipt
+	(*GeoIP)(nil),                        // 66: proto.GeoIP
 }
 var file_proto_santaizi_proto_depIdxs = []int32{
 	0,  // 0: proto.TelemetryEvent.event_type:type_name -> proto.TelemetryEventType
@@ -5611,91 +5768,93 @@ var file_proto_santaizi_proto_depIdxs = []int32{
 	2,  // 2: proto.TelemetryEvent.source_protocol:type_name -> proto.SourceProtocol
 	3,  // 3: proto.TelemetryEvent.reliability:type_name -> proto.Reliability
 	12, // 4: proto.TelemetryEvent.heartbeat:type_name -> proto.HeartbeatPayload
-	61, // 5: proto.TelemetryEvent.state:type_name -> proto.State
-	60, // 6: proto.TelemetryEvent.host:type_name -> proto.Host
+	63, // 5: proto.TelemetryEvent.state:type_name -> proto.State
+	62, // 6: proto.TelemetryEvent.host:type_name -> proto.Host
 	13, // 7: proto.TelemetryEvent.lifecycle:type_name -> proto.LifecyclePayload
 	14, // 8: proto.TelemetryEvent.state_rollup:type_name -> proto.StateRollupPayload
 	15, // 9: proto.TelemetryEvent.data_loss:type_name -> proto.DataLossPayload
 	5,  // 10: proto.LifecyclePayload.kind:type_name -> proto.LifecycleKind
-	61, // 11: proto.StateRollupPayload.minimum:type_name -> proto.State
-	61, // 12: proto.StateRollupPayload.average:type_name -> proto.State
-	61, // 13: proto.StateRollupPayload.maximum:type_name -> proto.State
+	63, // 11: proto.StateRollupPayload.minimum:type_name -> proto.State
+	63, // 12: proto.StateRollupPayload.average:type_name -> proto.State
+	63, // 13: proto.StateRollupPayload.maximum:type_name -> proto.State
 	4,  // 14: proto.DataLossPayload.reason:type_name -> proto.GapReason
 	4,  // 15: proto.SequenceGap.reason:type_name -> proto.GapReason
 	11, // 16: proto.TelemetryRecord.event:type_name -> proto.TelemetryEvent
 	16, // 17: proto.TelemetryRecord.gap:type_name -> proto.SequenceGap
 	18, // 18: proto.TelemetryHello.credential:type_name -> proto.SignedAgentCredential
-	27, // 19: proto.TelemetryHello.agent_runtime:type_name -> proto.AgentRuntime
+	29, // 19: proto.TelemetryHello.agent_runtime:type_name -> proto.AgentRuntime
 	17, // 20: proto.TelemetryBatch.records:type_name -> proto.TelemetryRecord
-	60, // 21: proto.RealtimeSnapshot.host:type_name -> proto.Host
-	61, // 22: proto.RealtimeSnapshot.state:type_name -> proto.State
-	27, // 23: proto.RealtimeSnapshot.agent_runtime:type_name -> proto.AgentRuntime
+	62, // 21: proto.RealtimeSnapshot.host:type_name -> proto.Host
+	63, // 22: proto.RealtimeSnapshot.state:type_name -> proto.State
+	29, // 23: proto.RealtimeSnapshot.agent_runtime:type_name -> proto.AgentRuntime
 	20, // 24: proto.TelemetryRequest.hello:type_name -> proto.TelemetryHello
 	21, // 25: proto.TelemetryRequest.batch:type_name -> proto.TelemetryBatch
 	22, // 26: proto.TelemetryRequest.realtime_snapshot:type_name -> proto.RealtimeSnapshot
-	24, // 27: proto.TelemetryResponse.acks:type_name -> proto.SessionAck
-	7,  // 28: proto.AgentRuntime.wal_pressure:type_name -> proto.WalPressure
-	26, // 29: proto.AgentRuntime.sinks:type_name -> proto.SinkRuntime
-	28, // 30: proto.AgentRuntime.capabilities:type_name -> proto.AgentCapabilities
-	8,  // 31: proto.AgentCapabilities.enabled:type_name -> proto.AgentCapability
-	6,  // 32: proto.TelemetryEndpoint.kind:type_name -> proto.EndpointKind
-	29, // 33: proto.EndpointAssignment.endpoints:type_name -> proto.TelemetryEndpoint
-	60, // 34: proto.AgentControlHello.host:type_name -> proto.Host
-	28, // 35: proto.AgentControlHello.capabilities:type_name -> proto.AgentCapabilities
-	31, // 36: proto.AgentControlRequest.hello:type_name -> proto.AgentControlHello
-	38, // 37: proto.AgentControlRequest.probe_result:type_name -> proto.ProbeResult
-	27, // 38: proto.AgentControlRequest.runtime:type_name -> proto.AgentRuntime
-	43, // 39: proto.AgentControlRequest.nat_open_result:type_name -> proto.NATOpenResult
-	30, // 40: proto.PrimaryControlResponse.assignment:type_name -> proto.EndpointAssignment
-	18, // 41: proto.PrimaryControlResponse.credential:type_name -> proto.SignedAgentCredential
-	34, // 42: proto.PrimaryControlResponse.probe_request:type_name -> proto.ProbeRequest
-	42, // 43: proto.PrimaryControlResponse.nat_open_request:type_name -> proto.NATOpenRequest
-	35, // 44: proto.ProbeRequest.http:type_name -> proto.HTTPProbeRequest
-	36, // 45: proto.ProbeRequest.icmp:type_name -> proto.ICMPProbeRequest
-	37, // 46: proto.ProbeRequest.tcp:type_name -> proto.TCPProbeRequest
-	9,  // 47: proto.ProbeResult.kind:type_name -> proto.ProbeKind
-	39, // 48: proto.ProbeResult.http:type_name -> proto.HTTPProbeResult
-	40, // 49: proto.ProbeResult.icmp:type_name -> proto.ICMPProbeResult
-	41, // 50: proto.ProbeResult.tcp:type_name -> proto.TCPProbeResult
-	10, // 51: proto.NATFrame.kind:type_name -> proto.NATFrameKind
-	11, // 52: proto.ReplicationBatch.events:type_name -> proto.TelemetryEvent
-	45, // 53: proto.ReplicationBatch.observations:type_name -> proto.TelemetryObservation
-	16, // 54: proto.ReplicationBatch.gaps:type_name -> proto.SequenceGap
-	46, // 55: proto.ReplicationBatch.health:type_name -> proto.ObserverHealthSample
-	47, // 56: proto.ReplicationBatch.runtime:type_name -> proto.CollectorRuntime
-	49, // 57: proto.ReplicationBatch.data_loss:type_name -> proto.CollectorDataLossFact
-	4,  // 58: proto.CollectorDataLossFact.reason:type_name -> proto.GapReason
-	47, // 59: proto.CollectorSyncHello.runtime:type_name -> proto.CollectorRuntime
-	54, // 60: proto.CollectorAuthorizationConfig.assignments:type_name -> proto.NodeAssignment
-	53, // 61: proto.CollectorSyncRequest.hello:type_name -> proto.CollectorSyncHello
-	47, // 62: proto.CollectorSyncRequest.runtime:type_name -> proto.CollectorRuntime
-	55, // 63: proto.CollectorSyncResponse.config:type_name -> proto.CollectorAuthorizationConfig
-	62, // 64: proto.State.temperatures:type_name -> proto.State_SensorTemperature
-	61, // 65: proto.SantaiziService.ReportSystemState:input_type -> proto.State
-	60, // 66: proto.SantaiziService.ReportSystemInfo:input_type -> proto.Host
-	64, // 67: proto.SantaiziService.LookupGeoIP:input_type -> proto.GeoIP
-	23, // 68: proto.SantaiziTelemetryService.Ingest:input_type -> proto.TelemetryRequest
-	32, // 69: proto.SantaiziControlService.Control:input_type -> proto.AgentControlRequest
-	44, // 70: proto.SantaiziNATService.NATStream:input_type -> proto.NATFrame
-	48, // 71: proto.SantaiziReplicationService.Replicate:input_type -> proto.ReplicationBatch
-	51, // 72: proto.SantaiziCollectorService.Register:input_type -> proto.RegisterCollectorRequest
-	56, // 73: proto.SantaiziCollectorService.Sync:input_type -> proto.CollectorSyncRequest
-	58, // 74: proto.SantaiziCollectorService.GetStatus:input_type -> proto.CollectorStatusRequest
-	63, // 75: proto.SantaiziService.ReportSystemState:output_type -> proto.Receipt
-	63, // 76: proto.SantaiziService.ReportSystemInfo:output_type -> proto.Receipt
-	64, // 77: proto.SantaiziService.LookupGeoIP:output_type -> proto.GeoIP
-	25, // 78: proto.SantaiziTelemetryService.Ingest:output_type -> proto.TelemetryResponse
-	33, // 79: proto.SantaiziControlService.Control:output_type -> proto.PrimaryControlResponse
-	44, // 80: proto.SantaiziNATService.NATStream:output_type -> proto.NATFrame
-	50, // 81: proto.SantaiziReplicationService.Replicate:output_type -> proto.ReplicationAck
-	52, // 82: proto.SantaiziCollectorService.Register:output_type -> proto.RegisterCollectorResponse
-	57, // 83: proto.SantaiziCollectorService.Sync:output_type -> proto.CollectorSyncResponse
-	59, // 84: proto.SantaiziCollectorService.GetStatus:output_type -> proto.CollectorStatus
-	75, // [75:85] is the sub-list for method output_type
-	65, // [65:75] is the sub-list for method input_type
-	65, // [65:65] is the sub-list for extension type_name
-	65, // [65:65] is the sub-list for extension extendee
-	0,  // [0:65] is the sub-list for field type_name
+	23, // 27: proto.TelemetryRequest.ping:type_name -> proto.TelemetryPing
+	26, // 28: proto.TelemetryResponse.acks:type_name -> proto.SessionAck
+	24, // 29: proto.TelemetryResponse.pong:type_name -> proto.TelemetryPong
+	7,  // 30: proto.AgentRuntime.wal_pressure:type_name -> proto.WalPressure
+	28, // 31: proto.AgentRuntime.sinks:type_name -> proto.SinkRuntime
+	30, // 32: proto.AgentRuntime.capabilities:type_name -> proto.AgentCapabilities
+	8,  // 33: proto.AgentCapabilities.enabled:type_name -> proto.AgentCapability
+	6,  // 34: proto.TelemetryEndpoint.kind:type_name -> proto.EndpointKind
+	31, // 35: proto.EndpointAssignment.endpoints:type_name -> proto.TelemetryEndpoint
+	62, // 36: proto.AgentControlHello.host:type_name -> proto.Host
+	30, // 37: proto.AgentControlHello.capabilities:type_name -> proto.AgentCapabilities
+	33, // 38: proto.AgentControlRequest.hello:type_name -> proto.AgentControlHello
+	40, // 39: proto.AgentControlRequest.probe_result:type_name -> proto.ProbeResult
+	29, // 40: proto.AgentControlRequest.runtime:type_name -> proto.AgentRuntime
+	45, // 41: proto.AgentControlRequest.nat_open_result:type_name -> proto.NATOpenResult
+	32, // 42: proto.PrimaryControlResponse.assignment:type_name -> proto.EndpointAssignment
+	18, // 43: proto.PrimaryControlResponse.credential:type_name -> proto.SignedAgentCredential
+	36, // 44: proto.PrimaryControlResponse.probe_request:type_name -> proto.ProbeRequest
+	44, // 45: proto.PrimaryControlResponse.nat_open_request:type_name -> proto.NATOpenRequest
+	37, // 46: proto.ProbeRequest.http:type_name -> proto.HTTPProbeRequest
+	38, // 47: proto.ProbeRequest.icmp:type_name -> proto.ICMPProbeRequest
+	39, // 48: proto.ProbeRequest.tcp:type_name -> proto.TCPProbeRequest
+	9,  // 49: proto.ProbeResult.kind:type_name -> proto.ProbeKind
+	41, // 50: proto.ProbeResult.http:type_name -> proto.HTTPProbeResult
+	42, // 51: proto.ProbeResult.icmp:type_name -> proto.ICMPProbeResult
+	43, // 52: proto.ProbeResult.tcp:type_name -> proto.TCPProbeResult
+	10, // 53: proto.NATFrame.kind:type_name -> proto.NATFrameKind
+	11, // 54: proto.ReplicationBatch.events:type_name -> proto.TelemetryEvent
+	47, // 55: proto.ReplicationBatch.observations:type_name -> proto.TelemetryObservation
+	16, // 56: proto.ReplicationBatch.gaps:type_name -> proto.SequenceGap
+	48, // 57: proto.ReplicationBatch.health:type_name -> proto.ObserverHealthSample
+	49, // 58: proto.ReplicationBatch.runtime:type_name -> proto.CollectorRuntime
+	51, // 59: proto.ReplicationBatch.data_loss:type_name -> proto.CollectorDataLossFact
+	4,  // 60: proto.CollectorDataLossFact.reason:type_name -> proto.GapReason
+	49, // 61: proto.CollectorSyncHello.runtime:type_name -> proto.CollectorRuntime
+	56, // 62: proto.CollectorAuthorizationConfig.assignments:type_name -> proto.NodeAssignment
+	55, // 63: proto.CollectorSyncRequest.hello:type_name -> proto.CollectorSyncHello
+	49, // 64: proto.CollectorSyncRequest.runtime:type_name -> proto.CollectorRuntime
+	57, // 65: proto.CollectorSyncResponse.config:type_name -> proto.CollectorAuthorizationConfig
+	64, // 66: proto.State.temperatures:type_name -> proto.State_SensorTemperature
+	63, // 67: proto.SantaiziService.ReportSystemState:input_type -> proto.State
+	62, // 68: proto.SantaiziService.ReportSystemInfo:input_type -> proto.Host
+	66, // 69: proto.SantaiziService.LookupGeoIP:input_type -> proto.GeoIP
+	25, // 70: proto.SantaiziTelemetryService.Ingest:input_type -> proto.TelemetryRequest
+	34, // 71: proto.SantaiziControlService.Control:input_type -> proto.AgentControlRequest
+	46, // 72: proto.SantaiziNATService.NATStream:input_type -> proto.NATFrame
+	50, // 73: proto.SantaiziReplicationService.Replicate:input_type -> proto.ReplicationBatch
+	53, // 74: proto.SantaiziCollectorService.Register:input_type -> proto.RegisterCollectorRequest
+	58, // 75: proto.SantaiziCollectorService.Sync:input_type -> proto.CollectorSyncRequest
+	60, // 76: proto.SantaiziCollectorService.GetStatus:input_type -> proto.CollectorStatusRequest
+	65, // 77: proto.SantaiziService.ReportSystemState:output_type -> proto.Receipt
+	65, // 78: proto.SantaiziService.ReportSystemInfo:output_type -> proto.Receipt
+	66, // 79: proto.SantaiziService.LookupGeoIP:output_type -> proto.GeoIP
+	27, // 80: proto.SantaiziTelemetryService.Ingest:output_type -> proto.TelemetryResponse
+	35, // 81: proto.SantaiziControlService.Control:output_type -> proto.PrimaryControlResponse
+	46, // 82: proto.SantaiziNATService.NATStream:output_type -> proto.NATFrame
+	52, // 83: proto.SantaiziReplicationService.Replicate:output_type -> proto.ReplicationAck
+	54, // 84: proto.SantaiziCollectorService.Register:output_type -> proto.RegisterCollectorResponse
+	59, // 85: proto.SantaiziCollectorService.Sync:output_type -> proto.CollectorSyncResponse
+	61, // 86: proto.SantaiziCollectorService.GetStatus:output_type -> proto.CollectorStatus
+	77, // [77:87] is the sub-list for method output_type
+	67, // [67:77] is the sub-list for method input_type
+	67, // [67:67] is the sub-list for extension type_name
+	67, // [67:67] is the sub-list for extension extendee
+	0,  // [0:67] is the sub-list for field type_name
 }
 
 func init() { file_proto_santaizi_proto_init() }
@@ -5715,38 +5874,39 @@ func file_proto_santaizi_proto_init() {
 		(*TelemetryRecord_Event)(nil),
 		(*TelemetryRecord_Gap)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[12].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[14].OneofWrappers = []any{
 		(*TelemetryRequest_Hello)(nil),
 		(*TelemetryRequest_Batch)(nil),
 		(*TelemetryRequest_RealtimeSnapshot)(nil),
+		(*TelemetryRequest_Ping)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[21].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[23].OneofWrappers = []any{
 		(*AgentControlRequest_Hello)(nil),
 		(*AgentControlRequest_ProbeResult)(nil),
 		(*AgentControlRequest_Runtime)(nil),
 		(*AgentControlRequest_NatOpenResult)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[22].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[24].OneofWrappers = []any{
 		(*PrimaryControlResponse_Assignment)(nil),
 		(*PrimaryControlResponse_Credential)(nil),
 		(*PrimaryControlResponse_ProbeRequest)(nil),
 		(*PrimaryControlResponse_NatOpenRequest)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[23].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[25].OneofWrappers = []any{
 		(*ProbeRequest_Http)(nil),
 		(*ProbeRequest_Icmp)(nil),
 		(*ProbeRequest_Tcp)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[27].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[29].OneofWrappers = []any{
 		(*ProbeResult_Http)(nil),
 		(*ProbeResult_Icmp)(nil),
 		(*ProbeResult_Tcp)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[45].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[47].OneofWrappers = []any{
 		(*CollectorSyncRequest_Hello)(nil),
 		(*CollectorSyncRequest_Runtime)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[46].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[48].OneofWrappers = []any{
 		(*CollectorSyncResponse_Config)(nil),
 		(*CollectorSyncResponse_Accepted)(nil),
 	}
@@ -5756,7 +5916,7 @@ func file_proto_santaizi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_santaizi_proto_rawDesc), len(file_proto_santaizi_proto_rawDesc)),
 			NumEnums:      11,
-			NumMessages:   54,
+			NumMessages:   56,
 			NumExtensions: 0,
 			NumServices:   6,
 		},
