@@ -3,17 +3,15 @@ name: Run Tests
 on:
   push:
     branches:
-      - feat/dev
       - main
-      - v0-final
-    paths-ignore:
-      - ".github/workflows/release.yml"
-      - "README.md"
+      - "release/**"
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
   pull_request:
     branches:
-      - feat/dev
       - main
-      - v0-final
+      - "release/**"
+  workflow_dispatch:
 
 permissions:
   contents: read

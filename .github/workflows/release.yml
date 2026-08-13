@@ -1,21 +1,9 @@
-name: Build + Release
+name: Release
 
 on:
   push:
     tags:
       - "v[0-9]*.[0-9]*.[0-9]*"
-    branches:
-      - feat/dev
-      - main
-      - v0-final
-    paths-ignore:
-      - ".github/workflows/test.yml"
-      - "README.md"
-  pull_request:
-    branches:
-      - feat/dev
-      - main
-      - v0-final
 
 permissions:
   contents: read
@@ -60,7 +48,6 @@ jobs:
           fetch-depth: 0
 
       - name: Validate release tag
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
           set -euo pipefail
@@ -70,8 +57,7 @@ jobs:
             echo "Expected SemVer vMAJOR.MINOR.PATCH with MAJOR >= 1 (starting v1.0.0)"
             exit 1
           fi
-          major="${BASH_REMATCH[1]}"
-          if (( major < 1 )); then
+          if (( BASH_REMATCH[1] < 1 )); then
             echo "Refusing tag $tag: this product line starts at v1.0.0"
             exit 1
           fi
@@ -81,20 +67,11 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Build Test
-        if: github.event_name != 'push' || !contains(github.ref, 'refs/tags/')
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: '~> v2'
-          args: build --single-target --clean --snapshot
-
       - name: Build
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: '~> v2'
+          version: "~> v2"
           args: build --single-target --clean
 
       - name: Archive
@@ -109,28 +86,11 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: build
     name: Release
     permissions:
       contents: write
     steps:
-      - name: Validate release tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag="${GITHUB_REF_NAME}"
-          if [[ ! "$tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            echo "Invalid tag: $tag"
-            echo "Expected SemVer vMAJOR.MINOR.PATCH with MAJOR >= 1 (starting v1.0.0)"
-            exit 1
-          fi
-          major="${BASH_REMATCH[1]}"
-          if (( major < 1 )); then
-            echo "Refusing tag $tag: this product line starts at v1.0.0"
-            exit 1
-          fi
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
