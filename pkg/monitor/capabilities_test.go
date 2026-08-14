@@ -70,3 +70,67 @@ func TestDisabledCapabilitiesSkipCollectors(t *testing.T) {
 		t.Fatalf("heartbeat continuity fields were not retained: host=%#v state=%#v", hostState, state)
 	}
 }
+
+func TestSlowStatsReuseCachedSample(t *testing.T) {
+	originalConfig := agentConfig
+	originalPartitions := diskPartitionsFn
+	originalDiskUsage := diskUsageFn
+	originalProcesses := processIDsFn
+	originalCPUPercent := cpuPercentFn
+	originalMemory := virtualMemoryFn
+	originalLoad := loadAverageFn
+	originalSockstat := readSockstatFn
+	t.Cleanup(func() {
+		agentConfig = originalConfig
+		diskPartitionsFn = originalPartitions
+		diskUsageFn = originalDiskUsage
+		processIDsFn = originalProcesses
+		cpuPercentFn = originalCPUPercent
+		virtualMemoryFn = originalMemory
+		loadAverageFn = originalLoad
+		readSockstatFn = originalSockstat
+		resetSlowStatCache()
+	})
+	resetSlowStatCache()
+	cfg := &model.AgentConfig{Capabilities: model.DefaultCapabilities()}
+	InitConfig(cfg)
+	diskCalls, procCalls := 0, 0
+	cpuPercentFn = func(time.Duration, bool) ([]float64, error) { return []float64{1}, nil }
+	virtualMemoryFn = func() (*mem.VirtualMemoryStat, error) { return &mem.VirtualMemoryStat{Total: 100, Available: 40}, nil }
+	loadAverageFn = func() (*load.AvgStat, error) { return &load.AvgStat{}, nil }
+	readSockstatFn = func() (uint64, uint64, bool) { return 1, 1, true }
+	diskPartitionsFn = func(bool) ([]disk.PartitionStat, error) {
+		return []disk.PartitionStat{{Device: "/dev/sda1", Fstype: "ext4", Mountpoint: "/"}}, nil
+	}
+	diskUsageFn = func(string) (*disk.UsageStat, error) {
+		diskCalls++
+		return &disk.UsageStat{Total: 100, Used: 40}, nil
+	}
+	processIDsFn = func() ([]int32, error) {
+		procCalls++
+		return []int32{1, 2, 3}, nil
+	}
+	first := GetState()
+	second := GetState()
+	if diskCalls != 1 || procCalls != 1 {
+		t.Fatalf("slow stats were recollected: disk=%d proc=%d", diskCalls, procCalls)
+	}
+	if first.DiskUsed != 40 || second.DiskUsed != 40 || first.ProcessCount != 3 || second.ProcessCount != 3 {
+		t.Fatalf("cached values mismatch: first=%#v second=%#v", first, second)
+	}
+}
+
+func TestParseSockstatCountsInuse(t *testing.T) {
+	data := "sockets: used 276\nTCP: inuse 32 orphan 0 tw 0 alloc 34 mem 3\nUDP: inuse 8 mem 0\n"
+	tcp, udp, ok := parseSockstat(data, "TCP:", "UDP:")
+	if !ok || tcp != 32 || udp != 8 {
+		t.Fatalf("tcp=%d udp=%d ok=%v", tcp, udp, ok)
+	}
+	tcp6, udp6, ok6 := parseSockstat("TCP6: inuse 4\nUDP6: inuse 1\n", "TCP6:", "UDP6:")
+	if !ok6 || tcp6 != 4 || udp6 != 1 {
+		t.Fatalf("tcp6=%d udp6=%d ok=%v", tcp6, udp6, ok6)
+	}
+	if _, _, ok := parseSockstat("sockets: used 1\n", "TCP:", "UDP:"); ok {
+		t.Fatal("missing protocols should not parse")
+	}
+}

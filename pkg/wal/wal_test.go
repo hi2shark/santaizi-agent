@@ -249,6 +249,59 @@ func TestDeletedEndpointReaddedWithNewGenerationStartsFreshObligation(t *testing
 	}
 }
 
+func TestSnapshotCloneDoesNotShareMaps(t *testing.T) {
+	store, err := OpenStateStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := []byte{1, 2, 3}
+	key := hex.EncodeToString(session)
+	if err := store.UpsertEndpoint(EndpointState{EndpointID: "primary", Generation: 1, Reliable: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpdateAck("primary", 1, session, 7); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := store.Snapshot()
+	snapshot.Endpoints["primary"].Cursors[key] = 99
+	if got := store.Ack("primary", session); got != 7 {
+		t.Fatalf("snapshot mutation leaked into store: %d", got)
+	}
+	cloned := store.Endpoint("primary")
+	cloned.Cursors[key] = 100
+	if got := store.Ack("primary", session); got != 7 {
+		t.Fatalf("endpoint clone leaked into store: %d", got)
+	}
+}
+
+func TestCollectPendingStopsAtLimit(t *testing.T) {
+	w, err := Open(Config{Dir: t.TempDir(), MaxSize: 1 << 20, FsyncInterval: time.Hour, FsyncRecords: 64})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+	for sequence := uint64(1); sequence <= 6; sequence++ {
+		if err := w.Append(testRecord(sequence), pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := w.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	got := w.CollectPending(func(record *pb.TelemetryRecord) bool {
+		return record.GetEvent().GetSequence() >= 4
+	}, 2)
+	if len(got) != 2 || got[0].GetEvent().GetSequence() != 4 || got[1].GetEvent().GetSequence() != 5 {
+		t.Fatalf("pending=%#v", got)
+	}
+	if !w.HasPending(func(session string, maxSeq uint64) bool { return maxSeq > 3 }) {
+		t.Fatal("heads should report pending")
+	}
+	if w.HasPending(func(session string, maxSeq uint64) bool { return maxSeq > 100 }) {
+		t.Fatal("caught-up predicate should be empty")
+	}
+}
+
 func TestPressureWatermarks(t *testing.T) {
 	tests := []struct {
 		size int64
@@ -291,6 +344,86 @@ func TestReclaimDeletesOnlyFullyAcknowledgedInactiveSegments(t *testing.T) {
 	for _, record := range mustRead(t, w) {
 		if record.GetEvent().GetSequence() <= 8 {
 			t.Fatalf("acknowledged record %d remained in a reclaimable segment", record.GetEvent().GetSequence())
+		}
+	}
+}
+
+func TestReadDurableOmitsUnsyncedAndCachesAfterSync(t *testing.T) {
+	w, err := Open(Config{Dir: t.TempDir(), MaxSize: 1 << 20, FsyncInterval: time.Hour, FsyncRecords: 64})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+	if err := w.Append(testRecord(1), pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL); err != nil {
+		t.Fatal(err)
+	}
+	if records := mustRead(t, w); len(records) != 0 {
+		t.Fatalf("unsynced records leaked: %d", len(records))
+	}
+	if len(w.DurableHeads()) != 0 {
+		t.Fatalf("heads before sync = %#v", w.DurableHeads())
+	}
+	if err := w.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	if records := mustRead(t, w); len(records) != 1 {
+		t.Fatalf("synced count=%d", len(records))
+	}
+	session, _, end := RecordRange(mustRead(t, w)[0])
+	if heads := w.DurableHeads(); heads[session] != end || end != 1 {
+		t.Fatalf("heads=%#v session=%s end=%d", w.DurableHeads(), session, end)
+	}
+}
+
+func TestReadDurableAfterRecoverMatchesDisk(t *testing.T) {
+	dir := t.TempDir()
+	w, err := Open(Config{Dir: dir, MaxSize: 1 << 20, FsyncInterval: time.Hour})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for sequence := uint64(1); sequence <= 4; sequence++ {
+		if err := w.Append(testRecord(sequence), pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	w, err = Open(Config{Dir: dir, MaxSize: 1 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+	records := mustRead(t, w)
+	if len(records) != 4 {
+		t.Fatalf("recovered count=%d", len(records))
+	}
+	session, _, end := RecordRange(records[3])
+	if w.DurableHeads()[session] != end {
+		t.Fatalf("recovered heads=%#v", w.DurableHeads())
+	}
+}
+
+func BenchmarkReadDurable(b *testing.B) {
+	w, err := Open(Config{Dir: b.TempDir(), SegmentSize: 1 << 20, MaxSize: 32 << 20, FsyncInterval: time.Hour, FsyncRecords: 100000})
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer w.Close()
+	const n = 2000
+	for sequence := uint64(1); sequence <= n; sequence++ {
+		if err := w.Append(testRecord(sequence), pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL); err != nil {
+			b.Fatal(err)
+		}
+	}
+	if err := w.Sync(); err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		records, err := w.ReadDurable()
+		if err != nil || len(records) != n {
+			b.Fatalf("count=%d err=%v", len(records), err)
 		}
 	}
 }

@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"sort"
@@ -81,7 +82,32 @@ var statDataFetchAttempts = map[string]int{
 
 var (
 	updateTempStatus = new(atomic.Bool)
+	readSockstatFn   = readProcSockstat
 )
+
+const slowStatMaxAge = 15 * time.Second
+
+type diskSample struct {
+	at          time.Time
+	total, used uint64
+	valid       bool
+}
+
+type processSample struct {
+	at    time.Time
+	count uint64
+	valid bool
+}
+
+var (
+	cachedDisk    diskSample
+	cachedProcess processSample
+)
+
+func resetSlowStatCache() {
+	cachedDisk = diskSample{}
+	cachedProcess = processSample{}
+}
 
 func InitConfig(cfg *model.AgentConfig) {
 	agentConfig = cfg
@@ -233,12 +259,7 @@ func GetState() *model.HostState {
 	}
 
 	if caps.Processes {
-		procs, err := processIDsFn()
-		if err != nil {
-			printf("process.Pids error: %v", err)
-		} else {
-			ret.ProcessCount = uint64(len(procs))
-		}
+		ret.ProcessCount = cachedProcessCount()
 	}
 
 	if caps.Temperature {
@@ -298,6 +319,15 @@ func TrackNetworkSpeed() {
 }
 
 func getDiskTotalAndUsed() (total uint64, used uint64) {
+	if cachedDisk.valid && time.Since(cachedDisk.at) < slowStatMaxAge {
+		return cachedDisk.total, cachedDisk.used
+	}
+	total, used = collectDiskTotalAndUsed()
+	cachedDisk = diskSample{at: time.Now(), total: total, used: used, valid: true}
+	return
+}
+
+func collectDiskTotalAndUsed() (total uint64, used uint64) {
 	devices := make(map[string]string)
 
 	if len(agentConfig.HardDrivePartitionAllowlist) > 0 {
@@ -349,7 +379,23 @@ func getDiskTotalAndUsed() (total uint64, used uint64) {
 	return
 }
 
+func cachedProcessCount() uint64 {
+	if cachedProcess.valid && time.Since(cachedProcess.at) < slowStatMaxAge {
+		return cachedProcess.count
+	}
+	procs, err := processIDsFn()
+	if err != nil {
+		printf("process.Pids error: %v", err)
+		return cachedProcess.count
+	}
+	cachedProcess = processSample{at: time.Now(), count: uint64(len(procs)), valid: true}
+	return cachedProcess.count
+}
+
 func getConns() (tcpConnCount, udpConnCount uint64) {
+	if tcp, udp, ok := readSockstatFn(); ok {
+		return tcp, udp
+	}
 	ss_err := true
 	if runtime.GOOS == "linux" {
 		tcpStat, err_tcp := goss.ConnectionsWithProtocol(goss.AF_INET, syscall.IPPROTO_TCP)
@@ -381,6 +427,52 @@ func getConns() (tcpConnCount, udpConnCount uint64) {
 		}
 	}
 	return tcpConnCount, udpConnCount
+}
+
+func readProcSockstat() (tcp, udp uint64, ok bool) {
+	if runtime.GOOS != "linux" {
+		return 0, 0, false
+	}
+	tcp4, udp4, ok4 := parseSockstatFile("/proc/net/sockstat", "TCP:", "UDP:")
+	tcp6, udp6, ok6 := parseSockstatFile("/proc/net/sockstat6", "TCP6:", "UDP6:")
+	if !ok4 && !ok6 {
+		return 0, 0, false
+	}
+	return tcp4 + tcp6, udp4 + udp6, true
+}
+
+func parseSockstatFile(path, tcpKey, udpKey string) (tcp, udp uint64, ok bool) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, 0, false
+	}
+	return parseSockstat(string(data), tcpKey, udpKey)
+}
+
+func parseSockstat(data, tcpKey, udpKey string) (tcp, udp uint64, ok bool) {
+	tcp, tcpOK := parseSockstatInuse(data, tcpKey)
+	udp, udpOK := parseSockstatInuse(data, udpKey)
+	return tcp, udp, tcpOK || udpOK
+}
+
+func parseSockstatInuse(data, protoKey string) (uint64, bool) {
+	for _, line := range strings.Split(data, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 3 || fields[0] != protoKey {
+			continue
+		}
+		for i := 1; i+1 < len(fields); i++ {
+			if fields[i] != "inuse" {
+				continue
+			}
+			n, err := strconv.ParseUint(fields[i+1], 10, 64)
+			if err != nil {
+				return 0, false
+			}
+			return n, true
+		}
+	}
+	return 0, false
 }
 
 func updateGPUStat() float64 {

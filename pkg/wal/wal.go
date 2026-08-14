@@ -31,6 +31,8 @@ const (
 	defaultReserve     = int64(1 << 20)
 )
 
+var frameCRC = crc32.MakeTable(crc32.Castagnoli)
+
 var (
 	ErrDownsampled = errors.New("wal pressure requires optional telemetry downsampling")
 	ErrNeedsRollup = errors.New("wal pressure requires telemetry rollup")
@@ -100,18 +102,21 @@ type segment struct {
 	size        int64
 	durableSize int64
 	ranges      map[string]SequenceRange
+	records     []*pb.TelemetryRecord
 }
 
 type WAL struct {
 	mu sync.Mutex
 
-	cfg      Config
-	segments []*segment
-	active   *os.File
-	buffer   *bufio.Writer
-	unsynced int
-	total    int64
-	issues   []RecoveryIssue
+	cfg          Config
+	segments     []*segment
+	active       *os.File
+	buffer       *bufio.Writer
+	unsynced     int
+	total        int64
+	issues       []RecoveryIssue
+	pending      []*pb.TelemetryRecord
+	durableHeads map[string]uint64
 
 	stopCh chan struct{}
 	doneCh chan struct{}
@@ -125,7 +130,7 @@ func Open(cfg Config) (*WAL, error) {
 	if err := os.MkdirAll(cfg.Dir, 0700); err != nil {
 		return nil, fmt.Errorf("create wal directory: %w", err)
 	}
-	w := &WAL{cfg: cfg, stopCh: make(chan struct{}), doneCh: make(chan struct{})}
+	w := &WAL{cfg: cfg, stopCh: make(chan struct{}), doneCh: make(chan struct{}), durableHeads: make(map[string]uint64)}
 	if err := w.recover(); err != nil {
 		return nil, err
 	}
@@ -204,7 +209,7 @@ func (w *WAL) Append(record *pb.TelemetryRecord, priority pb.TelemetryPriority) 
 	binary.BigEndian.PutUint16(header[4:6], frameVersion)
 	binary.BigEndian.PutUint16(header[6:8], uint16(priority))
 	binary.BigEndian.PutUint32(header[8:12], uint32(len(payload)))
-	binary.BigEndian.PutUint32(header[12:16], crc32.Checksum(payload, crc32.MakeTable(crc32.Castagnoli)))
+	binary.BigEndian.PutUint32(header[12:16], crc32.Checksum(payload, frameCRC))
 	if _, err := w.buffer.Write(header[:]); err != nil {
 		return err
 	}
@@ -215,6 +220,7 @@ func (w *WAL) Append(record *pb.TelemetryRecord, priority pb.TelemetryPriority) 
 	active.size += frameSize
 	w.total += frameSize
 	w.unsynced++
+	w.pending = append(w.pending, record)
 	addRecordRange(active, record)
 	if w.unsynced >= w.cfg.FsyncRecords {
 		return w.syncLocked()
@@ -239,34 +245,83 @@ func (w *WAL) syncLocked() error {
 		return err
 	}
 	active := w.segments[len(w.segments)-1]
-	active.durableSize = active.size
 	if err := writeManifest(active.path+".meta", active.ranges); err != nil {
 		return err
 	}
+	active.durableSize = active.size
+	active.records = append(active.records, w.pending...)
+	for _, record := range w.pending {
+		w.noteDurable(record)
+	}
+	w.pending = w.pending[:0]
 	w.unsynced = 0
 	return nil
 }
 
 func (w *WAL) ReadDurable() ([]*pb.TelemetryRecord, error) {
 	w.mu.Lock()
-	segments := make([]segment, len(w.segments))
-	for i, item := range w.segments {
-		segments[i] = *item
+	defer w.mu.Unlock()
+	var n int
+	for _, item := range w.segments {
+		n += len(item.records)
 	}
-	w.mu.Unlock()
-
-	var records []*pb.TelemetryRecord
-	for _, item := range segments {
-		if item.durableSize == 0 {
-			continue
-		}
-		part, _, err := scanFile(item.path, item.durableSize)
-		if err != nil {
-			return nil, err
-		}
-		records = append(records, part...)
+	records := make([]*pb.TelemetryRecord, 0, n)
+	for _, item := range w.segments {
+		records = append(records, item.records...)
 	}
 	return records, nil
+}
+
+func (w *WAL) DurableHeads() map[string]uint64 {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	heads := make(map[string]uint64, len(w.durableHeads))
+	for session, sequence := range w.durableHeads {
+		heads[session] = sequence
+	}
+	return heads
+}
+
+func (w *WAL) HasPending(visible func(session string, maxSeq uint64) bool) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for session, maxSeq := range w.durableHeads {
+		if visible(session, maxSeq) {
+			return true
+		}
+	}
+	return false
+}
+
+func (w *WAL) CollectPending(match func(*pb.TelemetryRecord) bool, limit int) []*pb.TelemetryRecord {
+	if limit <= 0 {
+		return nil
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	pending := make([]*pb.TelemetryRecord, 0, limit)
+	for _, item := range w.segments {
+		for _, record := range item.records {
+			if !match(record) {
+				continue
+			}
+			pending = append(pending, record)
+			if len(pending) >= limit {
+				return pending
+			}
+		}
+	}
+	return pending
+}
+
+func (w *WAL) noteDurable(record *pb.TelemetryRecord) {
+	session, _, end := RecordRange(record)
+	if session == "" {
+		return
+	}
+	if end > w.durableHeads[session] {
+		w.durableHeads[session] = end
+	}
 }
 
 // Reclaim removes only fully acknowledged, inactive segments. It never rewrites
@@ -284,9 +339,13 @@ func (w *WAL) Reclaim(acknowledged func(*pb.TelemetryRecord) bool) (int64, error
 			kept = append(kept, item)
 			continue
 		}
-		records, _, err := scanFile(item.path, item.durableSize)
-		if err != nil {
-			return reclaimed, err
+		records := item.records
+		if len(records) == 0 && item.durableSize > 0 {
+			scanned, _, err := scanFile(item.path, item.durableSize)
+			if err != nil {
+				return reclaimed, err
+			}
+			records = scanned
 		}
 		allAcknowledged := len(records) > 0
 		for _, record := range records {
@@ -390,7 +449,10 @@ func (w *WAL) recover() error {
 		if err != nil {
 			return err
 		}
-		item := &segment{id: id, path: path, size: info.Size(), durableSize: info.Size(), ranges: ranges}
+		item := &segment{id: id, path: path, size: info.Size(), durableSize: info.Size(), ranges: ranges, records: records}
+		for _, record := range records {
+			w.noteDurable(record)
+		}
 		if err := writeManifest(path+".meta", ranges); err != nil {
 			return err
 		}
@@ -434,6 +496,16 @@ func (w *WAL) rotateLocked() error {
 	w.active = file
 	w.buffer = bufio.NewWriterSize(file, 64<<10)
 	return nil
+}
+
+func RecordRange(record *pb.TelemetryRecord) (string, uint64, uint64) {
+	if event := record.GetEvent(); event != nil {
+		return hex.EncodeToString(event.GetSessionId()), event.GetSequence(), event.GetSequence()
+	}
+	if gap := record.GetGap(); gap != nil {
+		return hex.EncodeToString(gap.GetSessionId()), gap.GetStartSequence(), gap.GetEndSequence()
+	}
+	return "", 0, 0
 }
 
 func addRecordRange(item *segment, record *pb.TelemetryRecord) {
@@ -567,7 +639,7 @@ func scanFile(path string, limit int64) ([]*pb.TelemetryRecord, int64, error) {
 		if _, err := io.ReadFull(reader, payload); err != nil {
 			return records, offset, io.ErrUnexpectedEOF
 		}
-		if crc32.Checksum(payload, crc32.MakeTable(crc32.Castagnoli)) != binary.BigEndian.Uint32(header[12:16]) {
+		if crc32.Checksum(payload, frameCRC) != binary.BigEndian.Uint32(header[12:16]) {
 			return records, offset, fmt.Errorf("wal checksum mismatch at offset %d", offset)
 		}
 		record := new(pb.TelemetryRecord)

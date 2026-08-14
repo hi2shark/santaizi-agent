@@ -34,10 +34,11 @@ const telemetryProtocolVersion = "2"
 const sinkRTTInterval = 15 * time.Second
 
 type endpointWorker struct {
-	endpoint     *pb.TelemetryEndpoint
-	cancel       context.CancelFunc
-	pingDisabled bool
-	lastRTTAt    time.Time
+	endpoint        *pb.TelemetryEndpoint
+	cancel          context.CancelFunc
+	pingDisabled    bool
+	lastRTTAt       time.Time
+	lastSnapshotSeq uint64
 }
 
 type telemetryManager struct {
@@ -194,7 +195,7 @@ func (m *telemetryManager) collectLoop() {
 			} else if err != nil && !errors.Is(err, wal.ErrDownsampled) {
 				printf("追加状态探测失败: %v", err)
 			}
-			m.flushHostIfIPChanged()
+			m.flushHostIfLocationChanged()
 		case <-heartbeatTicker.C:
 			host := m.snapshotHost()
 			event, err := m.appendEvent(pb.TelemetryEventType_TELEMETRY_EVENT_TYPE_HEARTBEAT, pb.TelemetryPriority_TELEMETRY_PRIORITY_P0_CRITICAL,
@@ -206,7 +207,10 @@ func (m *telemetryManager) collectLoop() {
 		case <-hostTicker.C:
 			m.publishHost(m.nextHost())
 		case <-gcTicker.C:
-			if _, err := m.wal.Reclaim(m.recordAcknowledgedByAll); err != nil {
+			snapshot := m.state.Snapshot()
+			if _, err := m.wal.Reclaim(func(record *pb.TelemetryRecord) bool {
+				return recordAckedBy(snapshot, record)
+			}); err != nil {
 				printf("回收探测 WAL 失败: %v", err)
 			}
 		}
@@ -369,6 +373,12 @@ func (m *telemetryManager) previousHostIP() string {
 	return m.latestHost.GetIp()
 }
 
+func (m *telemetryManager) previousHostCountry() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.latestHost.GetCountryCode()
+}
+
 func (m *telemetryManager) nextHost() *pb.Host {
 	return retainKnownHostIP(collectHost(), m.previousHostIP())
 }
@@ -384,15 +394,26 @@ func (m *telemetryManager) publishHost(host *pb.Host) {
 	}
 }
 
-func (m *telemetryManager) flushHostIfIPChanged() {
+func (m *telemetryManager) flushHostIfLocationChanged() {
 	if !agentConfig.Capabilities.IPReport {
 		return
 	}
-	cached := strings.TrimSpace(monitor.CachedIP)
-	if cached == "" || cached == strings.TrimSpace(m.previousHostIP()) {
+	previous := &pb.Host{Ip: m.previousHostIP(), CountryCode: m.previousHostCountry()}
+	if !hostLocationChanged(monitor.CachedIP, monitor.CachedCountryCode, previous) {
 		return
 	}
 	m.publishHost(m.nextHost())
+}
+
+func hostLocationChanged(cachedIP, cachedCountry string, previous *pb.Host) bool {
+	cachedIP = strings.TrimSpace(cachedIP)
+	cachedCountry = strings.TrimSpace(cachedCountry)
+	if cachedIP == "" && cachedCountry == "" {
+		return false
+	}
+	prevIP := strings.TrimSpace(previous.GetIp())
+	prevCountry := strings.TrimSpace(previous.GetCountryCode())
+	return (cachedIP != "" && cachedIP != prevIP) || (cachedCountry != "" && cachedCountry != prevCountry)
 }
 
 func retainKnownHostIP(host *pb.Host, previousIP string) *pb.Host {
@@ -771,9 +792,12 @@ func (m *telemetryManager) sinkOnce(ctx context.Context, worker *endpointWorker)
 				return err
 			}
 			if len(records) == 0 {
-				if snapshot := m.realtimeSnapshot(); snapshot != nil {
-					if err := stream.Send(&pb.TelemetryRequest{Body: &pb.TelemetryRequest_RealtimeSnapshot{RealtimeSnapshot: snapshot}}); err != nil {
-						return err
+				if seq := m.latestSequence(); shouldSendRealtimeSnapshot(worker, seq) {
+					if snapshot := m.realtimeSnapshot(); snapshot != nil {
+						if err := stream.Send(&pb.TelemetryRequest{Body: &pb.TelemetryRequest_RealtimeSnapshot{RealtimeSnapshot: snapshot}}); err != nil {
+							return err
+						}
+						worker.lastSnapshotSeq = seq
 					}
 				}
 				if err := m.maybePingSink(stream, worker); err != nil {
@@ -852,55 +876,62 @@ func durationMilliseconds(d time.Duration) float64 {
 }
 
 func (m *telemetryManager) pendingFor(endpointID string, limit int) ([]*pb.TelemetryRecord, error) {
-	records, err := m.wal.ReadDurable()
-	if err != nil {
-		return nil, err
-	}
-	snapshot := m.state.Snapshot()
-	endpoint := snapshot.Endpoints[endpointID]
+	endpoint := m.state.Endpoint(endpointID)
 	if endpoint == nil || !endpoint.Reliable {
 		return nil, nil
 	}
-	pending := make([]*pb.TelemetryRecord, 0, limit)
-	for _, record := range records {
-		sessionID, start, end := recordRange(record)
-		if sessionID == "" {
-			continue
-		}
-		activation, obligated := endpoint.Activations[sessionID]
-		if !obligated {
-			if _, known := endpoint.Cursors[sessionID]; !known {
-				continue
-			}
-			activation = 1
-		}
-		if end < activation || end <= endpoint.Cursors[sessionID] || start > end {
-			continue
-		}
-		pending = append(pending, record)
-		if len(pending) >= limit {
-			break
-		}
+	if !m.wal.HasPending(func(session string, maxSeq uint64) bool {
+		return recordVisibleTo(endpoint, session, 1, maxSeq)
+	}) {
+		return nil, nil
 	}
-	return pending, nil
+	return m.wal.CollectPending(func(record *pb.TelemetryRecord) bool {
+		sessionID, start, end := wal.RecordRange(record)
+		return recordVisibleTo(endpoint, sessionID, start, end)
+	}, limit), nil
 }
 
-func recordRange(record *pb.TelemetryRecord) (string, uint64, uint64) {
-	if event := record.GetEvent(); event != nil {
-		return hex.EncodeToString(event.GetSessionId()), event.GetSequence(), event.GetSequence()
-	}
-	if gap := record.GetGap(); gap != nil {
-		return hex.EncodeToString(gap.GetSessionId()), gap.GetStartSequence(), gap.GetEndSequence()
-	}
-	return "", 0, 0
+func (m *telemetryManager) latestSequence() uint64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.latestSeq
 }
 
-func (m *telemetryManager) recordAcknowledgedByAll(record *pb.TelemetryRecord) bool {
-	sessionID, _, end := recordRange(record)
+func shouldSendRealtimeSnapshot(worker *endpointWorker, latestSeq uint64) bool {
+	return latestSeq != 0 && latestSeq != worker.lastSnapshotSeq
+}
+
+func hasPendingRecords(heads map[string]uint64, endpoint *wal.EndpointState) bool {
+	if endpoint == nil || !endpoint.Reliable {
+		return false
+	}
+	for session, maxSeq := range heads {
+		if recordVisibleTo(endpoint, session, 1, maxSeq) {
+			return true
+		}
+	}
+	return false
+}
+
+func recordVisibleTo(endpoint *wal.EndpointState, sessionID string, start, end uint64) bool {
+	if endpoint == nil || !endpoint.Reliable || sessionID == "" || start > end {
+		return false
+	}
+	activation, obligated := endpoint.Activations[sessionID]
+	if !obligated {
+		if _, known := endpoint.Cursors[sessionID]; !known {
+			return false
+		}
+		activation = 1
+	}
+	return end >= activation && end > endpoint.Cursors[sessionID]
+}
+
+func recordAckedBy(snapshot wal.CursorState, record *pb.TelemetryRecord) bool {
+	sessionID, _, end := wal.RecordRange(record)
 	if sessionID == "" {
 		return false
 	}
-	snapshot := m.state.Snapshot()
 	obligated := false
 	for _, endpoint := range snapshot.Endpoints {
 		if !endpoint.Reliable {

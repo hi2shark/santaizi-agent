@@ -1,14 +1,44 @@
 package main
 
 import (
+	"encoding/hex"
 	"io"
 	"testing"
 	"time"
 
+	"github.com/hi2shark/santaizi-agent/pkg/wal"
 	pb "github.com/hi2shark/santaizi-agent/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+func TestHostLocationChanged(t *testing.T) {
+	previous := &pb.Host{Ip: "203.0.113.10", CountryCode: "us"}
+	if hostLocationChanged("203.0.113.10", "us", previous) {
+		t.Fatal("unchanged location should not flush")
+	}
+	if !hostLocationChanged("198.51.100.8", "us", previous) {
+		t.Fatal("IP change should flush")
+	}
+	if !hostLocationChanged("203.0.113.10", "hk", previous) {
+		t.Fatal("country change should flush")
+	}
+	if hostLocationChanged("", "hk", &pb.Host{Ip: "203.0.113.10", CountryCode: "hk"}) {
+		t.Fatal("empty IP with same country should not flush")
+	}
+	if !hostLocationChanged("", "hk", &pb.Host{CountryCode: "us"}) {
+		t.Fatal("country-only change should flush")
+	}
+	if hostLocationChanged("", "", previous) {
+		t.Fatal("empty cache should not flush")
+	}
+	if !hostLocationChanged("203.0.113.10", "hk", nil) {
+		t.Fatal("first fill should flush")
+	}
+	if hostLocationChanged("203.0.113.10", "", previous) {
+		t.Fatal("empty new country should not wipe")
+	}
+}
 
 func TestRetainKnownHostIP(t *testing.T) {
 	if got := retainKnownHostIP(&pb.Host{Ip: "", Platform: "linux"}, "203.0.113.10").GetIp(); got != "203.0.113.10" {
@@ -51,6 +81,62 @@ func TestDurationMilliseconds(t *testing.T) {
 	}
 	if durationMilliseconds(-time.Millisecond) != 0 {
 		t.Fatal("negative duration should clamp to 0")
+	}
+}
+
+func TestHasPendingRecordsCaughtUp(t *testing.T) {
+	session := "aabbccddeeff00112233445566778899"
+	endpoint := &wal.EndpointState{
+		Reliable:    true,
+		Cursors:     map[string]uint64{session: 10},
+		Activations: map[string]uint64{session: 1},
+	}
+	if hasPendingRecords(map[string]uint64{session: 10}, endpoint) {
+		t.Fatal("caught-up cursor should skip WAL scan")
+	}
+	if !hasPendingRecords(map[string]uint64{session: 11}, endpoint) {
+		t.Fatal("newer durable sequence should be pending")
+	}
+	if hasPendingRecords(map[string]uint64{"other": 3}, endpoint) {
+		t.Fatal("unassigned session should not be pending")
+	}
+	if hasPendingRecords(map[string]uint64{session: 10}, &wal.EndpointState{Reliable: false, Cursors: map[string]uint64{session: 0}}) {
+		t.Fatal("unreliable endpoint should not be pending")
+	}
+}
+
+func TestShouldSendRealtimeSnapshotSkipsUnchangedSequence(t *testing.T) {
+	worker := &endpointWorker{}
+	if shouldSendRealtimeSnapshot(worker, 0) {
+		t.Fatal("zero sequence should not send")
+	}
+	if !shouldSendRealtimeSnapshot(worker, 4) {
+		t.Fatal("first sequence should send")
+	}
+	worker.lastSnapshotSeq = 4
+	if shouldSendRealtimeSnapshot(worker, 4) {
+		t.Fatal("unchanged sequence should skip clone and send")
+	}
+	if !shouldSendRealtimeSnapshot(worker, 5) {
+		t.Fatal("newer sequence should send")
+	}
+}
+
+func TestRecordAckedByRequiresEveryReliableEndpoint(t *testing.T) {
+	session := hex.EncodeToString(append(make([]byte, 15), 1))
+	record := &pb.TelemetryRecord{Record: &pb.TelemetryRecord_Event{Event: &pb.TelemetryEvent{
+		SessionId: append(make([]byte, 15), 1), Sequence: 4,
+	}}}
+	snapshot := wal.CursorState{Endpoints: map[string]*wal.EndpointState{
+		"primary": {Reliable: true, Cursors: map[string]uint64{session: 4}, Activations: map[string]uint64{session: 1}},
+		"slow":    {Reliable: true, Cursors: map[string]uint64{session: 3}, Activations: map[string]uint64{session: 1}},
+	}}
+	if recordAckedBy(snapshot, record) {
+		t.Fatal("lagging reliable sink should block reclaim")
+	}
+	snapshot.Endpoints["slow"].Cursors[session] = 4
+	if !recordAckedBy(snapshot, record) {
+		t.Fatal("all reliable sinks caught up should allow reclaim")
 	}
 }
 

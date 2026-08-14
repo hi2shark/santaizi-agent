@@ -123,13 +123,45 @@ func (s *StateStore) Ack(endpointID string, sessionID []byte) uint64 {
 	return endpoint.Cursors[hex.EncodeToString(sessionID)]
 }
 
+func (s *StateStore) Endpoint(id string) *EndpointState {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return cloneEndpoint(s.data.Endpoints[id])
+}
+
 func (s *StateStore) Snapshot() CursorState {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	encoded, _ := json.Marshal(s.data)
-	var clone CursorState
-	_ = json.Unmarshal(encoded, &clone)
-	return clone
+	return cloneCursorState(s.data)
+}
+
+func cloneCursorState(src CursorState) CursorState {
+	out := CursorState{ConfigVersion: src.ConfigVersion, Endpoints: make(map[string]*EndpointState, len(src.Endpoints))}
+	for id, endpoint := range src.Endpoints {
+		out.Endpoints[id] = cloneEndpoint(endpoint)
+	}
+	return out
+}
+
+func cloneEndpoint(src *EndpointState) *EndpointState {
+	if src == nil {
+		return nil
+	}
+	out := *src
+	out.Cursors = cloneUint64Map(src.Cursors)
+	out.Activations = cloneUint64Map(src.Activations)
+	return &out
+}
+
+func cloneUint64Map(src map[string]uint64) map[string]uint64 {
+	if src == nil {
+		return nil
+	}
+	out := make(map[string]uint64, len(src))
+	for key, value := range src {
+		out[key] = value
+	}
+	return out
 }
 
 func (s *StateStore) saveLocked() error {
