@@ -584,9 +584,10 @@ var SantaiziReplicationService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SantaiziCollectorService_Register_FullMethodName  = "/proto.SantaiziCollectorService/Register"
-	SantaiziCollectorService_Sync_FullMethodName      = "/proto.SantaiziCollectorService/Sync"
-	SantaiziCollectorService_GetStatus_FullMethodName = "/proto.SantaiziCollectorService/GetStatus"
+	SantaiziCollectorService_Register_FullMethodName       = "/proto.SantaiziCollectorService/Register"
+	SantaiziCollectorService_Sync_FullMethodName           = "/proto.SantaiziCollectorService/Sync"
+	SantaiziCollectorService_GetStatus_FullMethodName      = "/proto.SantaiziCollectorService/GetStatus"
+	SantaiziCollectorService_RenewCollector_FullMethodName = "/proto.SantaiziCollectorService/RenewCollector"
 )
 
 // SantaiziCollectorServiceClient is the client API for SantaiziCollectorService service.
@@ -596,6 +597,7 @@ type SantaiziCollectorServiceClient interface {
 	Register(ctx context.Context, in *RegisterCollectorRequest, opts ...grpc.CallOption) (*RegisterCollectorResponse, error)
 	Sync(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[CollectorSyncRequest, CollectorSyncResponse], error)
 	GetStatus(ctx context.Context, in *CollectorStatusRequest, opts ...grpc.CallOption) (*CollectorStatus, error)
+	RenewCollector(ctx context.Context, in *CollectorRenewRequest, opts ...grpc.CallOption) (*CollectorEnrollResponse, error)
 }
 
 type santaiziCollectorServiceClient struct {
@@ -639,6 +641,16 @@ func (c *santaiziCollectorServiceClient) GetStatus(ctx context.Context, in *Coll
 	return out, nil
 }
 
+func (c *santaiziCollectorServiceClient) RenewCollector(ctx context.Context, in *CollectorRenewRequest, opts ...grpc.CallOption) (*CollectorEnrollResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CollectorEnrollResponse)
+	err := c.cc.Invoke(ctx, SantaiziCollectorService_RenewCollector_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SantaiziCollectorServiceServer is the server API for SantaiziCollectorService service.
 // All implementations must embed UnimplementedSantaiziCollectorServiceServer
 // for forward compatibility.
@@ -646,6 +658,7 @@ type SantaiziCollectorServiceServer interface {
 	Register(context.Context, *RegisterCollectorRequest) (*RegisterCollectorResponse, error)
 	Sync(grpc.BidiStreamingServer[CollectorSyncRequest, CollectorSyncResponse]) error
 	GetStatus(context.Context, *CollectorStatusRequest) (*CollectorStatus, error)
+	RenewCollector(context.Context, *CollectorRenewRequest) (*CollectorEnrollResponse, error)
 	mustEmbedUnimplementedSantaiziCollectorServiceServer()
 }
 
@@ -664,6 +677,9 @@ func (UnimplementedSantaiziCollectorServiceServer) Sync(grpc.BidiStreamingServer
 }
 func (UnimplementedSantaiziCollectorServiceServer) GetStatus(context.Context, *CollectorStatusRequest) (*CollectorStatus, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedSantaiziCollectorServiceServer) RenewCollector(context.Context, *CollectorRenewRequest) (*CollectorEnrollResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RenewCollector not implemented")
 }
 func (UnimplementedSantaiziCollectorServiceServer) mustEmbedUnimplementedSantaiziCollectorServiceServer() {
 }
@@ -730,6 +746,24 @@ func _SantaiziCollectorService_GetStatus_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SantaiziCollectorService_RenewCollector_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CollectorRenewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SantaiziCollectorServiceServer).RenewCollector(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SantaiziCollectorService_RenewCollector_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SantaiziCollectorServiceServer).RenewCollector(ctx, req.(*CollectorRenewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SantaiziCollectorService_ServiceDesc is the grpc.ServiceDesc for SantaiziCollectorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -745,6 +779,10 @@ var SantaiziCollectorService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetStatus",
 			Handler:    _SantaiziCollectorService_GetStatus_Handler,
 		},
+		{
+			MethodName: "RenewCollector",
+			Handler:    _SantaiziCollectorService_RenewCollector_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -754,5 +792,146 @@ var SantaiziCollectorService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
+	Metadata: "proto/santaizi.proto",
+}
+
+const (
+	SantaiziEnrollmentService_Enroll_FullMethodName = "/proto.SantaiziEnrollmentService/Enroll"
+	SantaiziEnrollmentService_Renew_FullMethodName  = "/proto.SantaiziEnrollmentService/Renew"
+)
+
+// SantaiziEnrollmentServiceClient is the client API for SantaiziEnrollmentService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SantaiziEnrollmentServiceClient interface {
+	Enroll(ctx context.Context, in *AgentEnrollRequest, opts ...grpc.CallOption) (*AgentEnrollResponse, error)
+	Renew(ctx context.Context, in *AgentRenewRequest, opts ...grpc.CallOption) (*AgentEnrollResponse, error)
+}
+
+type santaiziEnrollmentServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSantaiziEnrollmentServiceClient(cc grpc.ClientConnInterface) SantaiziEnrollmentServiceClient {
+	return &santaiziEnrollmentServiceClient{cc}
+}
+
+func (c *santaiziEnrollmentServiceClient) Enroll(ctx context.Context, in *AgentEnrollRequest, opts ...grpc.CallOption) (*AgentEnrollResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AgentEnrollResponse)
+	err := c.cc.Invoke(ctx, SantaiziEnrollmentService_Enroll_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *santaiziEnrollmentServiceClient) Renew(ctx context.Context, in *AgentRenewRequest, opts ...grpc.CallOption) (*AgentEnrollResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AgentEnrollResponse)
+	err := c.cc.Invoke(ctx, SantaiziEnrollmentService_Renew_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SantaiziEnrollmentServiceServer is the server API for SantaiziEnrollmentService service.
+// All implementations must embed UnimplementedSantaiziEnrollmentServiceServer
+// for forward compatibility.
+type SantaiziEnrollmentServiceServer interface {
+	Enroll(context.Context, *AgentEnrollRequest) (*AgentEnrollResponse, error)
+	Renew(context.Context, *AgentRenewRequest) (*AgentEnrollResponse, error)
+	mustEmbedUnimplementedSantaiziEnrollmentServiceServer()
+}
+
+// UnimplementedSantaiziEnrollmentServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedSantaiziEnrollmentServiceServer struct{}
+
+func (UnimplementedSantaiziEnrollmentServiceServer) Enroll(context.Context, *AgentEnrollRequest) (*AgentEnrollResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Enroll not implemented")
+}
+func (UnimplementedSantaiziEnrollmentServiceServer) Renew(context.Context, *AgentRenewRequest) (*AgentEnrollResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Renew not implemented")
+}
+func (UnimplementedSantaiziEnrollmentServiceServer) mustEmbedUnimplementedSantaiziEnrollmentServiceServer() {
+}
+func (UnimplementedSantaiziEnrollmentServiceServer) testEmbeddedByValue() {}
+
+// UnsafeSantaiziEnrollmentServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SantaiziEnrollmentServiceServer will
+// result in compilation errors.
+type UnsafeSantaiziEnrollmentServiceServer interface {
+	mustEmbedUnimplementedSantaiziEnrollmentServiceServer()
+}
+
+func RegisterSantaiziEnrollmentServiceServer(s grpc.ServiceRegistrar, srv SantaiziEnrollmentServiceServer) {
+	// If the following call panics, it indicates UnimplementedSantaiziEnrollmentServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&SantaiziEnrollmentService_ServiceDesc, srv)
+}
+
+func _SantaiziEnrollmentService_Enroll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AgentEnrollRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SantaiziEnrollmentServiceServer).Enroll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SantaiziEnrollmentService_Enroll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SantaiziEnrollmentServiceServer).Enroll(ctx, req.(*AgentEnrollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SantaiziEnrollmentService_Renew_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AgentRenewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SantaiziEnrollmentServiceServer).Renew(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SantaiziEnrollmentService_Renew_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SantaiziEnrollmentServiceServer).Renew(ctx, req.(*AgentRenewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// SantaiziEnrollmentService_ServiceDesc is the grpc.ServiceDesc for SantaiziEnrollmentService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var SantaiziEnrollmentService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.SantaiziEnrollmentService",
+	HandlerType: (*SantaiziEnrollmentServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Enroll",
+			Handler:    _SantaiziEnrollmentService_Enroll_Handler,
+		},
+		{
+			MethodName: "Renew",
+			Handler:    _SantaiziEnrollmentService_Renew_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/santaizi.proto",
 }

@@ -11,6 +11,7 @@ func TestProtocolExposesOnlyTypedSantaiziServices(t *testing.T) {
 	expected := []protoreflect.Name{
 		"SantaiziService", "SantaiziTelemetryService", "SantaiziControlService",
 		"SantaiziNATService", "SantaiziReplicationService", "SantaiziCollectorService",
+		"SantaiziEnrollmentService",
 	}
 	if services.Len() != len(expected) {
 		t.Fatalf("service count=%d, want %d", services.Len(), len(expected))

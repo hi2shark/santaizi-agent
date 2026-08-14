@@ -17,6 +17,8 @@ server: 10.0.0.10:5555
 client_secret: "your-agent-secret"
 tls: false
 insecure_tls: false
+tls_ca_file: ""
+
 report_delay: 5
 
 telemetry:
@@ -57,7 +59,10 @@ capabilities:
 
 控制流只能下发类型化 HTTP、ICMP、TCP 探测和 NAT 建链请求。NAT 数据使用独立 `SantaiziNATService/NATStream`，协议不包含通用命令、终端、文件管理或更新能力。心跳与可靠身份始终启用；其他采集及网络能力可通过 `capabilities` 或对应 CLI 参数关闭。
 
-运行 `agent --help` 可查看完整参数。`service install` 会把面板地址、密钥、TLS 和能力开关写入配置文件（权限 `0600`）；系统服务启动参数只有 `--config`，不会把密钥放进 `ps` / `systemctl cat`。前台调试仍可用 `-s` / `-p`。
+运行 `agent --help` 可查看完整参数。`service install` 会把面板地址、密钥、TLS 和能力开关写入配置文件（权限 `0600`）；系统服务启动参数只有 `--config`，不会把密钥放进 `ps` / `systemctl cat`。前台调试仍可用 `-s` / `-p`。`--insecure` 会跳过服务端证书校验，**仅测试**，启动时会打 Warning。
+
+设备证书落在数据目录 `pki/{client.key,client.crt,ca.crt}`。有证后 Control 走 mTLS，不再带 `client_secret`。仅当面板返回 `Unimplemented` 才回退旧密钥认证；网络 / TLS / Unauthenticated / PermissionDenied 不会当成旧面板。
+
 
 已用旧方式安装、unit 里仍带 `-p` 的实例，需要重新执行安装（或再次 `service install`）以重写服务定义。
 

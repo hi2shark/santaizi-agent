@@ -34,6 +34,7 @@ type TelemetryConfig struct {
 	BatchSize         int                       `json:"batch_size" mapstructure:"batch_size" yaml:"batch_size"`
 	DisabledRemoteIDs []string                  `json:"disabled_remote_ids" mapstructure:"disabled_remote_ids" yaml:"disabled_remote_ids"`
 	Collectors        []TelemetryEndpointConfig `json:"collectors" mapstructure:"collectors" yaml:"collectors"`
+	CertRenewDays     int                       `json:"cert_renew_days,omitempty" mapstructure:"cert_renew_days" yaml:"cert_renew_days,omitempty"`
 	WAL               WALConfig                 `json:"wal" mapstructure:"wal" yaml:"wal"`
 }
 
@@ -66,6 +67,7 @@ type AgentConfig struct {
 	ClientSecret                string           `json:"client_secret" mapstructure:"client_secret" yaml:"client_secret"`
 	TLS                         bool             `json:"tls" mapstructure:"tls" yaml:"tls"`
 	InsecureTLS                 bool             `json:"insecure_tls" mapstructure:"insecure_tls" yaml:"insecure_tls"`
+	TLSCAFile                   string           `json:"tls_ca_file,omitempty" mapstructure:"tls_ca_file" yaml:"tls_ca_file,omitempty"`
 	ReportDelay                 int              `json:"report_delay" mapstructure:"report_delay" yaml:"report_delay"`
 	IPReportPeriod              uint32           `json:"ip_report_period" mapstructure:"ip_report_period" yaml:"ip_report_period"`
 	IPReportInterface           string           `json:"ip_report_interface,omitempty" mapstructure:"ip_report_interface" yaml:"ip_report_interface,omitempty"`
@@ -139,6 +141,9 @@ func (c *AgentConfig) ApplyDefaults(dataDirOverride string) {
 	}
 	if c.Telemetry.BatchSize <= 0 {
 		c.Telemetry.BatchSize = 256
+	}
+	if c.Telemetry.CertRenewDays <= 0 {
+		c.Telemetry.CertRenewDays = 7
 	}
 	if c.Telemetry.WAL.SegmentSizeBytes <= 0 {
 		c.Telemetry.WAL.SegmentSizeBytes = 8 << 20

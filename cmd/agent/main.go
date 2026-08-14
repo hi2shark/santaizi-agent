@@ -183,6 +183,9 @@ func preRun(cmd *cobra.Command, args []string) {
 		fmt.Println(version)
 		os.Exit(0)
 	}
+	if agentCliParam.InsecureTLS {
+		fmt.Fprintln(os.Stderr, "Warning: --insecure skips TLS certificate verification and is for testing only")
+	}
 	if agentCliParam.ClientSecret == "" {
 		_ = cmd.Help()
 		os.Exit(1)

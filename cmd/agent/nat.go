@@ -34,7 +34,7 @@ func (m *telemetryManager) startNAT(request *pb.NATOpenRequest) error {
 		cancel()
 		return err
 	}
-	rpcConnection, err := grpc.NewClient(agentCliParam.Server, m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, true)...)
+	rpcConnection, err := grpc.NewClient(agentCliParam.Server, m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, m.legacyAuth)...)
 	if err != nil {
 		_ = target.Close()
 		cancel()

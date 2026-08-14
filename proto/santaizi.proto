@@ -29,6 +29,12 @@ service SantaiziCollectorService {
     rpc Register(RegisterCollectorRequest) returns(RegisterCollectorResponse){}
     rpc Sync(stream CollectorSyncRequest) returns(stream CollectorSyncResponse){}
     rpc GetStatus(CollectorStatusRequest) returns(CollectorStatus){}
+    rpc RenewCollector(CollectorRenewRequest) returns(CollectorEnrollResponse){}
+}
+
+service SantaiziEnrollmentService {
+    rpc Enroll(AgentEnrollRequest) returns(AgentEnrollResponse){}
+    rpc Renew(AgentRenewRequest) returns(AgentEnrollResponse){}
 }
 
 enum TelemetryEventType {
@@ -469,6 +475,7 @@ message ReplicationAck {
 message RegisterCollectorRequest {
     string registration_token = 1;
     string protocol_version = 2;
+    bytes csr_der = 3;
 }
 
 message RegisterCollectorResponse {
@@ -476,6 +483,43 @@ message RegisterCollectorResponse {
     bytes primary_public_key = 2;
     bytes key_id = 3;
     uint64 config_version = 4;
+    string agent_ca_certificate_pem = 5;
+    string collector_certificate_pem = 6;
+    string collector_ca_certificate_pem = 7;
+    int64 not_before_unix = 8;
+    int64 expires_at_unix = 9;
+}
+
+message CollectorRenewRequest {
+    string collector_uuid = 1;
+    bytes csr_der = 2;
+}
+
+message CollectorEnrollResponse {
+    string certificate_pem = 1;
+    string ca_certificate_pem = 2;
+    string agent_ca_certificate_pem = 3;
+    int64 not_before_unix = 4;
+    int64 expires_at_unix = 5;
+}
+
+message AgentEnrollRequest {
+    bytes node_uuid = 1;
+    bytes csr_der = 2;
+    string agent_version = 3;
+}
+
+message AgentRenewRequest {
+    bytes node_uuid = 1;
+    bytes csr_der = 2;
+    string agent_version = 3;
+}
+
+message AgentEnrollResponse {
+    string certificate_pem = 1;
+    string ca_certificate_pem = 2;
+    int64 not_before_unix = 3;
+    int64 expires_at_unix = 4;
 }
 
 message CollectorSyncHello {
@@ -500,6 +544,7 @@ message CollectorAuthorizationConfig {
     bytes key_id = 3;
     repeated bytes revoked_node_uuids = 4;
     repeated NodeAssignment assignments = 5;
+    string agent_ca_certificate_pem = 6;
 }
 
 message CollectorSyncRequest {

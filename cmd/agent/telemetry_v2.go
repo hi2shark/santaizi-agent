@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"crypto/tls"
 	"encoding/hex"
 	"errors"
@@ -19,6 +20,7 @@ import (
 	"github.com/hi2shark/santaizi-agent/model"
 	"github.com/hi2shark/santaizi-agent/pkg/identity"
 	"github.com/hi2shark/santaizi-agent/pkg/monitor"
+	"github.com/hi2shark/santaizi-agent/pkg/pki"
 	"github.com/hi2shark/santaizi-agent/pkg/util"
 	"github.com/hi2shark/santaizi-agent/pkg/wal"
 	pb "github.com/hi2shark/santaizi-agent/proto"
@@ -53,17 +55,21 @@ type telemetryManager struct {
 	wal     *wal.WAL
 	state   *wal.StateStore
 
-	mu          sync.RWMutex
-	credential  *pb.SignedAgentCredential
-	assignment  *pb.EndpointAssignment
-	workers     map[string]*endpointWorker
-	sinkRuntime map[string]*pb.SinkRuntime
-	latestHost  *pb.Host
-	latestState *pb.State
-	latestSeq   uint64
-	latestAt    time.Time
-	closing     bool
-	rollup      *pressureStateRollup
+	mu           sync.RWMutex
+	credential   *pb.SignedAgentCredential
+	assignment   *pb.EndpointAssignment
+	workers      map[string]*endpointWorker
+	sinkRuntime  map[string]*pb.SinkRuntime
+	latestHost   *pb.Host
+	latestState  *pb.State
+	latestSeq    uint64
+	latestAt     time.Time
+	closing      bool
+	rollup       *pressureStateRollup
+	pkiStore     *pki.Store
+	legacyAuth   bool
+	renewBackoff time.Duration
+	nextRenew    time.Time
 }
 
 func startV2Telemetry(parent context.Context, auth model.AuthHandler) (*telemetryManager, error) {
@@ -95,11 +101,16 @@ func startV2Telemetry(parent context.Context, auth model.AuthHandler) (*telemetr
 		_ = journal.Close()
 		return nil, err
 	}
+	pkiStore, err := pki.Open(filepath.Join(dataDir, "pki"))
+	if err != nil {
+		_ = journal.Close()
+		return nil, err
+	}
 	ctx, cancel := context.WithCancel(parent)
 	m := &telemetryManager{
 		ctx: ctx, cancel: cancel, auth: auth, nodeID: nodeID, session: session,
 		started: time.Now(), wal: journal, state: state, workers: make(map[string]*endpointWorker),
-		sinkRuntime: make(map[string]*pb.SinkRuntime),
+		sinkRuntime: make(map[string]*pb.SinkRuntime), pkiStore: pkiStore,
 	}
 	if credential, err := readCredential(filepath.Join(dataDir, "credential.pb")); err == nil {
 		m.credential = credential
@@ -560,7 +571,10 @@ func (m *telemetryManager) controlLoop() {
 }
 
 func (m *telemetryManager) controlOnce() error {
-	options := m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, true)
+	if err := m.ensureDeviceCredentials(); err != nil {
+		return err
+	}
+	options := m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, m.legacyAuth)
 	conn, err := grpc.NewClient(agentCliParam.Server, options...)
 	if err != nil {
 		return err
@@ -1109,7 +1123,16 @@ func (m *telemetryManager) setSinkError(endpoint *pb.TelemetryEndpoint, err erro
 func (m *telemetryManager) dialOptions(useTLS, insecureTLS, withAuth bool) []grpc.DialOption {
 	var transport grpc.DialOption
 	if useTLS {
-		transport = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: insecureTLS}))
+		tlsCfg, err := pki.NewClientTLSConfig(pki.ClientTLSOptions{
+			CAFile:               agentConfig.TLSCAFile,
+			ExtraCAPEM:           m.pkiCAPEM(),
+			InsecureSkipVerify:   insecureTLS,
+			GetClientCertificate: m.pkiGetClientCertificate(),
+		})
+		if err != nil {
+			tlsCfg = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: insecureTLS}
+		}
+		transport = grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg))
 	} else {
 		transport = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
@@ -1118,6 +1141,149 @@ func (m *telemetryManager) dialOptions(useTLS, insecureTLS, withAuth bool) []grp
 		options = append(options, grpc.WithPerRPCCredentials(&m.auth))
 	}
 	return options
+}
+
+func (m *telemetryManager) pkiCAPEM() []byte {
+	if m == nil || m.pkiStore == nil {
+		return nil
+	}
+	return m.pkiStore.CAPEM()
+}
+
+func (m *telemetryManager) pkiGetClientCertificate() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	if m == nil || m.pkiStore == nil || m.legacyAuth {
+		return nil
+	}
+	return m.pkiStore.GetClientCertificate
+}
+
+func (m *telemetryManager) renewWindow() time.Duration {
+	days := agentConfig.Telemetry.CertRenewDays
+	if days <= 0 {
+		days = 7
+	}
+	return time.Duration(days) * 24 * time.Hour
+}
+
+func (m *telemetryManager) ensureDeviceCredentials() error {
+	if m.pkiStore == nil {
+		m.legacyAuth = true
+		return nil
+	}
+	bundle, err := m.pkiStore.Load()
+	if err != nil && !errors.Is(err, pki.ErrNotFound) {
+		return err
+	}
+	now := time.Now()
+	if bundle != nil && !bundle.Expired(now) {
+		if bundle.NeedsRenew(now, m.renewWindow()) && !now.Before(m.nextRenew) {
+			if renewErr := m.renewDeviceCertificate(); renewErr != nil {
+				printf("设备证书续期失败，继续使用现有证书: %v", renewErr)
+				if m.renewBackoff == 0 {
+					m.renewBackoff = time.Second
+				} else if m.renewBackoff < 10*time.Second {
+					m.renewBackoff *= 2
+				}
+				m.nextRenew = now.Add(m.renewBackoff)
+			} else {
+				m.renewBackoff = 0
+				m.nextRenew = time.Time{}
+			}
+		}
+		m.legacyAuth = false
+		return nil
+	}
+	if bundle != nil && bundle.Expired(now) && agentCliParam.ClientSecret == "" {
+		return errors.New("device certificate expired; bootstrap client_secret is required")
+	}
+	if agentCliParam.TLS {
+		enrollErr := m.enrollDeviceCertificate()
+		if enrollErr == nil {
+			m.legacyAuth = false
+			return nil
+		}
+		if pki.IsLegacyPanel(enrollErr) {
+			printf("面板不支持 Enrollment，回退到密钥认证")
+			m.legacyAuth = true
+			return nil
+		}
+		return enrollErr
+	}
+	m.legacyAuth = true
+	return nil
+}
+
+func (m *telemetryManager) enrollmentDialOptions() ([]grpc.DialOption, error) {
+	tlsCfg, err := pki.NewClientTLSConfig(pki.ClientTLSOptions{
+		CAFile:             agentConfig.TLSCAFile,
+		InsecureSkipVerify: agentCliParam.InsecureTLS,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return []grpc.DialOption{
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)),
+		grpc.WithPerRPCCredentials(&pki.EnrollmentCredential{ClientSecret: agentCliParam.ClientSecret}),
+	}, nil
+}
+
+func (m *telemetryManager) enrollDeviceCertificate() error {
+	key, err := pki.GenerateKey()
+	if err != nil {
+		return err
+	}
+	csr, err := pki.CreateCSR(key, m.nodeID[:])
+	if err != nil {
+		return err
+	}
+	options, err := m.enrollmentDialOptions()
+	if err != nil {
+		return err
+	}
+	conn, err := grpc.NewClient(agentCliParam.Server, options...)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	response, err := pb.NewSantaiziEnrollmentServiceClient(conn).Enroll(m.ctx, &pb.AgentEnrollRequest{
+		NodeUuid: m.nodeID[:], CsrDer: csr, AgentVersion: version,
+	})
+	if err != nil {
+		return err
+	}
+	return m.saveIssuedCertificate(key, response.GetCertificatePem(), response.GetCaCertificatePem())
+}
+
+func (m *telemetryManager) renewDeviceCertificate() error {
+	key, err := pki.GenerateKey()
+	if err != nil {
+		return err
+	}
+	csr, err := pki.CreateCSR(key, m.nodeID[:])
+	if err != nil {
+		return err
+	}
+	options := m.dialOptions(true, agentCliParam.InsecureTLS, false)
+	conn, err := grpc.NewClient(agentCliParam.Server, options...)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	response, err := pb.NewSantaiziEnrollmentServiceClient(conn).Renew(m.ctx, &pb.AgentRenewRequest{
+		NodeUuid: m.nodeID[:], CsrDer: csr, AgentVersion: version,
+	})
+	if err != nil {
+		return err
+	}
+	return m.saveIssuedCertificate(key, response.GetCertificatePem(), response.GetCaCertificatePem())
+}
+
+func (m *telemetryManager) saveIssuedCertificate(key ed25519.PrivateKey, certPEM, caPEM string) error {
+	cert, err := pki.ParseCertificatePEM([]byte(certPEM))
+	if err != nil {
+		return err
+	}
+	return m.pkiStore.Save(&pki.Bundle{Key: key, Cert: cert, CertPEM: []byte(certPEM), CAPEM: []byte(caPEM)})
 }
 
 func cloneHost(host *pb.Host) *pb.Host {

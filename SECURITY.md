@@ -19,3 +19,9 @@
 * 探针以 root 运行、配置文件权限被放宽等部署选择造成的后果
 * 上游 [nezhahq/agent](https://github.com/nezhahq/agent) 未经本项目修改的代码 —— 请报给上游
 * 第三方依赖自身漏洞 —— 请报给对应项目；如本项目未及时升级，可另行提 Issue
+
+## gRPC TLS 与设备证书
+
+探针客户端证由主面板 Agent CA 签发（SAN `urn:santaizi:agent:<uuid>`），与 `SignedAgentCredential` 分钥。证书文件：数据目录 `pki/{client.key,client.crt,ca.crt}`。可选 `tls_ca_file` 追加自定义 CA，且不会丢掉系统根证书。
+
+`--insecure` / `insecure_tls` 仅测试，启动会 Warning。`client_secret` 在启用面板 Enrollment 后只作 bootstrap。迁移顺序见主面板 [`SECURITY.md`](https://github.com/hi2shark/santaizi-dashboard/blob/main/SECURITY.md)。

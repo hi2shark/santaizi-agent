@@ -4092,6 +4092,7 @@ type RegisterCollectorRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	RegistrationToken string                 `protobuf:"bytes,1,opt,name=registration_token,json=registrationToken,proto3" json:"registration_token,omitempty"`
 	ProtocolVersion   string                 `protobuf:"bytes,2,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
+	CsrDer            []byte                 `protobuf:"bytes,3,opt,name=csr_der,json=csrDer,proto3" json:"csr_der,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -4140,14 +4141,26 @@ func (x *RegisterCollectorRequest) GetProtocolVersion() string {
 	return ""
 }
 
+func (x *RegisterCollectorRequest) GetCsrDer() []byte {
+	if x != nil {
+		return x.CsrDer
+	}
+	return nil
+}
+
 type RegisterCollectorResponse struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	CollectorUuid    string                 `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
-	PrimaryPublicKey []byte                 `protobuf:"bytes,2,opt,name=primary_public_key,json=primaryPublicKey,proto3" json:"primary_public_key,omitempty"`
-	KeyId            []byte                 `protobuf:"bytes,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
-	ConfigVersion    uint64                 `protobuf:"varint,4,opt,name=config_version,json=configVersion,proto3" json:"config_version,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	CollectorUuid             string                 `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
+	PrimaryPublicKey          []byte                 `protobuf:"bytes,2,opt,name=primary_public_key,json=primaryPublicKey,proto3" json:"primary_public_key,omitempty"`
+	KeyId                     []byte                 `protobuf:"bytes,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
+	ConfigVersion             uint64                 `protobuf:"varint,4,opt,name=config_version,json=configVersion,proto3" json:"config_version,omitempty"`
+	AgentCaCertificatePem     string                 `protobuf:"bytes,5,opt,name=agent_ca_certificate_pem,json=agentCaCertificatePem,proto3" json:"agent_ca_certificate_pem,omitempty"`
+	CollectorCertificatePem   string                 `protobuf:"bytes,6,opt,name=collector_certificate_pem,json=collectorCertificatePem,proto3" json:"collector_certificate_pem,omitempty"`
+	CollectorCaCertificatePem string                 `protobuf:"bytes,7,opt,name=collector_ca_certificate_pem,json=collectorCaCertificatePem,proto3" json:"collector_ca_certificate_pem,omitempty"`
+	NotBeforeUnix             int64                  `protobuf:"varint,8,opt,name=not_before_unix,json=notBeforeUnix,proto3" json:"not_before_unix,omitempty"`
+	ExpiresAtUnix             int64                  `protobuf:"varint,9,opt,name=expires_at_unix,json=expiresAtUnix,proto3" json:"expires_at_unix,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *RegisterCollectorResponse) Reset() {
@@ -4208,6 +4221,357 @@ func (x *RegisterCollectorResponse) GetConfigVersion() uint64 {
 	return 0
 }
 
+func (x *RegisterCollectorResponse) GetAgentCaCertificatePem() string {
+	if x != nil {
+		return x.AgentCaCertificatePem
+	}
+	return ""
+}
+
+func (x *RegisterCollectorResponse) GetCollectorCertificatePem() string {
+	if x != nil {
+		return x.CollectorCertificatePem
+	}
+	return ""
+}
+
+func (x *RegisterCollectorResponse) GetCollectorCaCertificatePem() string {
+	if x != nil {
+		return x.CollectorCaCertificatePem
+	}
+	return ""
+}
+
+func (x *RegisterCollectorResponse) GetNotBeforeUnix() int64 {
+	if x != nil {
+		return x.NotBeforeUnix
+	}
+	return 0
+}
+
+func (x *RegisterCollectorResponse) GetExpiresAtUnix() int64 {
+	if x != nil {
+		return x.ExpiresAtUnix
+	}
+	return 0
+}
+
+type CollectorRenewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CollectorUuid string                 `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
+	CsrDer        []byte                 `protobuf:"bytes,2,opt,name=csr_der,json=csrDer,proto3" json:"csr_der,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CollectorRenewRequest) Reset() {
+	*x = CollectorRenewRequest{}
+	mi := &file_proto_santaizi_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CollectorRenewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CollectorRenewRequest) ProtoMessage() {}
+
+func (x *CollectorRenewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CollectorRenewRequest.ProtoReflect.Descriptor instead.
+func (*CollectorRenewRequest) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *CollectorRenewRequest) GetCollectorUuid() string {
+	if x != nil {
+		return x.CollectorUuid
+	}
+	return ""
+}
+
+func (x *CollectorRenewRequest) GetCsrDer() []byte {
+	if x != nil {
+		return x.CsrDer
+	}
+	return nil
+}
+
+type CollectorEnrollResponse struct {
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	CertificatePem        string                 `protobuf:"bytes,1,opt,name=certificate_pem,json=certificatePem,proto3" json:"certificate_pem,omitempty"`
+	CaCertificatePem      string                 `protobuf:"bytes,2,opt,name=ca_certificate_pem,json=caCertificatePem,proto3" json:"ca_certificate_pem,omitempty"`
+	AgentCaCertificatePem string                 `protobuf:"bytes,3,opt,name=agent_ca_certificate_pem,json=agentCaCertificatePem,proto3" json:"agent_ca_certificate_pem,omitempty"`
+	NotBeforeUnix         int64                  `protobuf:"varint,4,opt,name=not_before_unix,json=notBeforeUnix,proto3" json:"not_before_unix,omitempty"`
+	ExpiresAtUnix         int64                  `protobuf:"varint,5,opt,name=expires_at_unix,json=expiresAtUnix,proto3" json:"expires_at_unix,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *CollectorEnrollResponse) Reset() {
+	*x = CollectorEnrollResponse{}
+	mi := &file_proto_santaizi_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CollectorEnrollResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CollectorEnrollResponse) ProtoMessage() {}
+
+func (x *CollectorEnrollResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CollectorEnrollResponse.ProtoReflect.Descriptor instead.
+func (*CollectorEnrollResponse) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *CollectorEnrollResponse) GetCertificatePem() string {
+	if x != nil {
+		return x.CertificatePem
+	}
+	return ""
+}
+
+func (x *CollectorEnrollResponse) GetCaCertificatePem() string {
+	if x != nil {
+		return x.CaCertificatePem
+	}
+	return ""
+}
+
+func (x *CollectorEnrollResponse) GetAgentCaCertificatePem() string {
+	if x != nil {
+		return x.AgentCaCertificatePem
+	}
+	return ""
+}
+
+func (x *CollectorEnrollResponse) GetNotBeforeUnix() int64 {
+	if x != nil {
+		return x.NotBeforeUnix
+	}
+	return 0
+}
+
+func (x *CollectorEnrollResponse) GetExpiresAtUnix() int64 {
+	if x != nil {
+		return x.ExpiresAtUnix
+	}
+	return 0
+}
+
+type AgentEnrollRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeUuid      []byte                 `protobuf:"bytes,1,opt,name=node_uuid,json=nodeUuid,proto3" json:"node_uuid,omitempty"`
+	CsrDer        []byte                 `protobuf:"bytes,2,opt,name=csr_der,json=csrDer,proto3" json:"csr_der,omitempty"`
+	AgentVersion  string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentEnrollRequest) Reset() {
+	*x = AgentEnrollRequest{}
+	mi := &file_proto_santaizi_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentEnrollRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentEnrollRequest) ProtoMessage() {}
+
+func (x *AgentEnrollRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentEnrollRequest.ProtoReflect.Descriptor instead.
+func (*AgentEnrollRequest) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *AgentEnrollRequest) GetNodeUuid() []byte {
+	if x != nil {
+		return x.NodeUuid
+	}
+	return nil
+}
+
+func (x *AgentEnrollRequest) GetCsrDer() []byte {
+	if x != nil {
+		return x.CsrDer
+	}
+	return nil
+}
+
+func (x *AgentEnrollRequest) GetAgentVersion() string {
+	if x != nil {
+		return x.AgentVersion
+	}
+	return ""
+}
+
+type AgentRenewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeUuid      []byte                 `protobuf:"bytes,1,opt,name=node_uuid,json=nodeUuid,proto3" json:"node_uuid,omitempty"`
+	CsrDer        []byte                 `protobuf:"bytes,2,opt,name=csr_der,json=csrDer,proto3" json:"csr_der,omitempty"`
+	AgentVersion  string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentRenewRequest) Reset() {
+	*x = AgentRenewRequest{}
+	mi := &file_proto_santaizi_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentRenewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentRenewRequest) ProtoMessage() {}
+
+func (x *AgentRenewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentRenewRequest.ProtoReflect.Descriptor instead.
+func (*AgentRenewRequest) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *AgentRenewRequest) GetNodeUuid() []byte {
+	if x != nil {
+		return x.NodeUuid
+	}
+	return nil
+}
+
+func (x *AgentRenewRequest) GetCsrDer() []byte {
+	if x != nil {
+		return x.CsrDer
+	}
+	return nil
+}
+
+func (x *AgentRenewRequest) GetAgentVersion() string {
+	if x != nil {
+		return x.AgentVersion
+	}
+	return ""
+}
+
+type AgentEnrollResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	CertificatePem   string                 `protobuf:"bytes,1,opt,name=certificate_pem,json=certificatePem,proto3" json:"certificate_pem,omitempty"`
+	CaCertificatePem string                 `protobuf:"bytes,2,opt,name=ca_certificate_pem,json=caCertificatePem,proto3" json:"ca_certificate_pem,omitempty"`
+	NotBeforeUnix    int64                  `protobuf:"varint,3,opt,name=not_before_unix,json=notBeforeUnix,proto3" json:"not_before_unix,omitempty"`
+	ExpiresAtUnix    int64                  `protobuf:"varint,4,opt,name=expires_at_unix,json=expiresAtUnix,proto3" json:"expires_at_unix,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *AgentEnrollResponse) Reset() {
+	*x = AgentEnrollResponse{}
+	mi := &file_proto_santaizi_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentEnrollResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentEnrollResponse) ProtoMessage() {}
+
+func (x *AgentEnrollResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_santaizi_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentEnrollResponse.ProtoReflect.Descriptor instead.
+func (*AgentEnrollResponse) Descriptor() ([]byte, []int) {
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *AgentEnrollResponse) GetCertificatePem() string {
+	if x != nil {
+		return x.CertificatePem
+	}
+	return ""
+}
+
+func (x *AgentEnrollResponse) GetCaCertificatePem() string {
+	if x != nil {
+		return x.CaCertificatePem
+	}
+	return ""
+}
+
+func (x *AgentEnrollResponse) GetNotBeforeUnix() int64 {
+	if x != nil {
+		return x.NotBeforeUnix
+	}
+	return 0
+}
+
+func (x *AgentEnrollResponse) GetExpiresAtUnix() int64 {
+	if x != nil {
+		return x.ExpiresAtUnix
+	}
+	return 0
+}
+
 type CollectorSyncHello struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	CollectorUuid        string                 `protobuf:"bytes,1,opt,name=collector_uuid,json=collectorUuid,proto3" json:"collector_uuid,omitempty"`
@@ -4220,7 +4584,7 @@ type CollectorSyncHello struct {
 
 func (x *CollectorSyncHello) Reset() {
 	*x = CollectorSyncHello{}
-	mi := &file_proto_santaizi_proto_msgTypes[44]
+	mi := &file_proto_santaizi_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4232,7 +4596,7 @@ func (x *CollectorSyncHello) String() string {
 func (*CollectorSyncHello) ProtoMessage() {}
 
 func (x *CollectorSyncHello) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[44]
+	mi := &file_proto_santaizi_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4245,7 +4609,7 @@ func (x *CollectorSyncHello) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSyncHello.ProtoReflect.Descriptor instead.
 func (*CollectorSyncHello) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{44}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *CollectorSyncHello) GetCollectorUuid() string {
@@ -4290,7 +4654,7 @@ type NodeAssignment struct {
 
 func (x *NodeAssignment) Reset() {
 	*x = NodeAssignment{}
-	mi := &file_proto_santaizi_proto_msgTypes[45]
+	mi := &file_proto_santaizi_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4302,7 +4666,7 @@ func (x *NodeAssignment) String() string {
 func (*NodeAssignment) ProtoMessage() {}
 
 func (x *NodeAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[45]
+	mi := &file_proto_santaizi_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4315,7 +4679,7 @@ func (x *NodeAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeAssignment.ProtoReflect.Descriptor instead.
 func (*NodeAssignment) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{45}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *NodeAssignment) GetNodeUuid() []byte {
@@ -4361,19 +4725,20 @@ func (x *NodeAssignment) GetConfigVersion() uint64 {
 }
 
 type CollectorAuthorizationConfig struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	ConfigVersion    uint64                 `protobuf:"varint,1,opt,name=config_version,json=configVersion,proto3" json:"config_version,omitempty"`
-	PrimaryPublicKey []byte                 `protobuf:"bytes,2,opt,name=primary_public_key,json=primaryPublicKey,proto3" json:"primary_public_key,omitempty"`
-	KeyId            []byte                 `protobuf:"bytes,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
-	RevokedNodeUuids [][]byte               `protobuf:"bytes,4,rep,name=revoked_node_uuids,json=revokedNodeUuids,proto3" json:"revoked_node_uuids,omitempty"`
-	Assignments      []*NodeAssignment      `protobuf:"bytes,5,rep,name=assignments,proto3" json:"assignments,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	ConfigVersion         uint64                 `protobuf:"varint,1,opt,name=config_version,json=configVersion,proto3" json:"config_version,omitempty"`
+	PrimaryPublicKey      []byte                 `protobuf:"bytes,2,opt,name=primary_public_key,json=primaryPublicKey,proto3" json:"primary_public_key,omitempty"`
+	KeyId                 []byte                 `protobuf:"bytes,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
+	RevokedNodeUuids      [][]byte               `protobuf:"bytes,4,rep,name=revoked_node_uuids,json=revokedNodeUuids,proto3" json:"revoked_node_uuids,omitempty"`
+	Assignments           []*NodeAssignment      `protobuf:"bytes,5,rep,name=assignments,proto3" json:"assignments,omitempty"`
+	AgentCaCertificatePem string                 `protobuf:"bytes,6,opt,name=agent_ca_certificate_pem,json=agentCaCertificatePem,proto3" json:"agent_ca_certificate_pem,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *CollectorAuthorizationConfig) Reset() {
 	*x = CollectorAuthorizationConfig{}
-	mi := &file_proto_santaizi_proto_msgTypes[46]
+	mi := &file_proto_santaizi_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4385,7 +4750,7 @@ func (x *CollectorAuthorizationConfig) String() string {
 func (*CollectorAuthorizationConfig) ProtoMessage() {}
 
 func (x *CollectorAuthorizationConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[46]
+	mi := &file_proto_santaizi_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4398,7 +4763,7 @@ func (x *CollectorAuthorizationConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorAuthorizationConfig.ProtoReflect.Descriptor instead.
 func (*CollectorAuthorizationConfig) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{46}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *CollectorAuthorizationConfig) GetConfigVersion() uint64 {
@@ -4436,6 +4801,13 @@ func (x *CollectorAuthorizationConfig) GetAssignments() []*NodeAssignment {
 	return nil
 }
 
+func (x *CollectorAuthorizationConfig) GetAgentCaCertificatePem() string {
+	if x != nil {
+		return x.AgentCaCertificatePem
+	}
+	return ""
+}
+
 type CollectorSyncRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Body:
@@ -4449,7 +4821,7 @@ type CollectorSyncRequest struct {
 
 func (x *CollectorSyncRequest) Reset() {
 	*x = CollectorSyncRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[47]
+	mi := &file_proto_santaizi_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4461,7 +4833,7 @@ func (x *CollectorSyncRequest) String() string {
 func (*CollectorSyncRequest) ProtoMessage() {}
 
 func (x *CollectorSyncRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[47]
+	mi := &file_proto_santaizi_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4474,7 +4846,7 @@ func (x *CollectorSyncRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSyncRequest.ProtoReflect.Descriptor instead.
 func (*CollectorSyncRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{47}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *CollectorSyncRequest) GetBody() isCollectorSyncRequest_Body {
@@ -4531,7 +4903,7 @@ type CollectorSyncResponse struct {
 
 func (x *CollectorSyncResponse) Reset() {
 	*x = CollectorSyncResponse{}
-	mi := &file_proto_santaizi_proto_msgTypes[48]
+	mi := &file_proto_santaizi_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4543,7 +4915,7 @@ func (x *CollectorSyncResponse) String() string {
 func (*CollectorSyncResponse) ProtoMessage() {}
 
 func (x *CollectorSyncResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[48]
+	mi := &file_proto_santaizi_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4556,7 +4928,7 @@ func (x *CollectorSyncResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorSyncResponse.ProtoReflect.Descriptor instead.
 func (*CollectorSyncResponse) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{48}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *CollectorSyncResponse) GetBody() isCollectorSyncResponse_Body {
@@ -4609,7 +4981,7 @@ type CollectorStatusRequest struct {
 
 func (x *CollectorStatusRequest) Reset() {
 	*x = CollectorStatusRequest{}
-	mi := &file_proto_santaizi_proto_msgTypes[49]
+	mi := &file_proto_santaizi_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4621,7 +4993,7 @@ func (x *CollectorStatusRequest) String() string {
 func (*CollectorStatusRequest) ProtoMessage() {}
 
 func (x *CollectorStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[49]
+	mi := &file_proto_santaizi_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4634,7 +5006,7 @@ func (x *CollectorStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorStatusRequest.ProtoReflect.Descriptor instead.
 func (*CollectorStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{49}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *CollectorStatusRequest) GetAuthorization() string {
@@ -4659,7 +5031,7 @@ type CollectorStatus struct {
 
 func (x *CollectorStatus) Reset() {
 	*x = CollectorStatus{}
-	mi := &file_proto_santaizi_proto_msgTypes[50]
+	mi := &file_proto_santaizi_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4671,7 +5043,7 @@ func (x *CollectorStatus) String() string {
 func (*CollectorStatus) ProtoMessage() {}
 
 func (x *CollectorStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[50]
+	mi := &file_proto_santaizi_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4684,7 +5056,7 @@ func (x *CollectorStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectorStatus.ProtoReflect.Descriptor instead.
 func (*CollectorStatus) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{50}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *CollectorStatus) GetConnectedAgents() uint64 {
@@ -4757,7 +5129,7 @@ type Host struct {
 
 func (x *Host) Reset() {
 	*x = Host{}
-	mi := &file_proto_santaizi_proto_msgTypes[51]
+	mi := &file_proto_santaizi_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4769,7 +5141,7 @@ func (x *Host) String() string {
 func (*Host) ProtoMessage() {}
 
 func (x *Host) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[51]
+	mi := &file_proto_santaizi_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4782,7 +5154,7 @@ func (x *Host) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Host.ProtoReflect.Descriptor instead.
 func (*Host) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{51}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *Host) GetPlatform() string {
@@ -4901,7 +5273,7 @@ type State struct {
 
 func (x *State) Reset() {
 	*x = State{}
-	mi := &file_proto_santaizi_proto_msgTypes[52]
+	mi := &file_proto_santaizi_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4913,7 +5285,7 @@ func (x *State) String() string {
 func (*State) ProtoMessage() {}
 
 func (x *State) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[52]
+	mi := &file_proto_santaizi_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4926,7 +5298,7 @@ func (x *State) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use State.ProtoReflect.Descriptor instead.
 func (*State) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{52}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *State) GetCpu() float64 {
@@ -5058,7 +5430,7 @@ type State_SensorTemperature struct {
 
 func (x *State_SensorTemperature) Reset() {
 	*x = State_SensorTemperature{}
-	mi := &file_proto_santaizi_proto_msgTypes[53]
+	mi := &file_proto_santaizi_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5070,7 +5442,7 @@ func (x *State_SensorTemperature) String() string {
 func (*State_SensorTemperature) ProtoMessage() {}
 
 func (x *State_SensorTemperature) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[53]
+	mi := &file_proto_santaizi_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5083,7 +5455,7 @@ func (x *State_SensorTemperature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use State_SensorTemperature.ProtoReflect.Descriptor instead.
 func (*State_SensorTemperature) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{53}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *State_SensorTemperature) GetName() string {
@@ -5109,7 +5481,7 @@ type Receipt struct {
 
 func (x *Receipt) Reset() {
 	*x = Receipt{}
-	mi := &file_proto_santaizi_proto_msgTypes[54]
+	mi := &file_proto_santaizi_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5121,7 +5493,7 @@ func (x *Receipt) String() string {
 func (*Receipt) ProtoMessage() {}
 
 func (x *Receipt) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[54]
+	mi := &file_proto_santaizi_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5134,7 +5506,7 @@ func (x *Receipt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Receipt.ProtoReflect.Descriptor instead.
 func (*Receipt) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{54}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *Receipt) GetProced() bool {
@@ -5154,7 +5526,7 @@ type GeoIP struct {
 
 func (x *GeoIP) Reset() {
 	*x = GeoIP{}
-	mi := &file_proto_santaizi_proto_msgTypes[55]
+	mi := &file_proto_santaizi_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5166,7 +5538,7 @@ func (x *GeoIP) String() string {
 func (*GeoIP) ProtoMessage() {}
 
 func (x *GeoIP) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_santaizi_proto_msgTypes[55]
+	mi := &file_proto_santaizi_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5179,7 +5551,7 @@ func (x *GeoIP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeoIP.ProtoReflect.Descriptor instead.
 func (*GeoIP) Descriptor() ([]byte, []int) {
-	return file_proto_santaizi_proto_rawDescGZIP(), []int{55}
+	return file_proto_santaizi_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *GeoIP) GetIp() string {
@@ -5497,15 +5869,43 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\x13replication_session\x18\x02 \x01(\fR\x12replicationSession\x12%\n" +
 	"\x0ebatch_sequence\x18\x03 \x01(\x04R\rbatchSequence\x12;\n" +
 	"\x1acommitted_spool_through_id\x18\x04 \x01(\x04R\x17committedSpoolThroughId\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05error\"t\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error\"\x8d\x01\n" +
 	"\x18RegisterCollectorRequest\x12-\n" +
 	"\x12registration_token\x18\x01 \x01(\tR\x11registrationToken\x12)\n" +
-	"\x10protocol_version\x18\x02 \x01(\tR\x0fprotocolVersion\"\xae\x01\n" +
+	"\x10protocol_version\x18\x02 \x01(\tR\x0fprotocolVersion\x12\x17\n" +
+	"\acsr_der\x18\x03 \x01(\fR\x06csrDer\"\xb4\x03\n" +
 	"\x19RegisterCollectorResponse\x12%\n" +
 	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12,\n" +
 	"\x12primary_public_key\x18\x02 \x01(\fR\x10primaryPublicKey\x12\x15\n" +
 	"\x06key_id\x18\x03 \x01(\fR\x05keyId\x12%\n" +
-	"\x0econfig_version\x18\x04 \x01(\x04R\rconfigVersion\"\xd3\x01\n" +
+	"\x0econfig_version\x18\x04 \x01(\x04R\rconfigVersion\x127\n" +
+	"\x18agent_ca_certificate_pem\x18\x05 \x01(\tR\x15agentCaCertificatePem\x12:\n" +
+	"\x19collector_certificate_pem\x18\x06 \x01(\tR\x17collectorCertificatePem\x12?\n" +
+	"\x1ccollector_ca_certificate_pem\x18\a \x01(\tR\x19collectorCaCertificatePem\x12&\n" +
+	"\x0fnot_before_unix\x18\b \x01(\x03R\rnotBeforeUnix\x12&\n" +
+	"\x0fexpires_at_unix\x18\t \x01(\x03R\rexpiresAtUnix\"W\n" +
+	"\x15CollectorRenewRequest\x12%\n" +
+	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12\x17\n" +
+	"\acsr_der\x18\x02 \x01(\fR\x06csrDer\"\xf9\x01\n" +
+	"\x17CollectorEnrollResponse\x12'\n" +
+	"\x0fcertificate_pem\x18\x01 \x01(\tR\x0ecertificatePem\x12,\n" +
+	"\x12ca_certificate_pem\x18\x02 \x01(\tR\x10caCertificatePem\x127\n" +
+	"\x18agent_ca_certificate_pem\x18\x03 \x01(\tR\x15agentCaCertificatePem\x12&\n" +
+	"\x0fnot_before_unix\x18\x04 \x01(\x03R\rnotBeforeUnix\x12&\n" +
+	"\x0fexpires_at_unix\x18\x05 \x01(\x03R\rexpiresAtUnix\"o\n" +
+	"\x12AgentEnrollRequest\x12\x1b\n" +
+	"\tnode_uuid\x18\x01 \x01(\fR\bnodeUuid\x12\x17\n" +
+	"\acsr_der\x18\x02 \x01(\fR\x06csrDer\x12#\n" +
+	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\"n\n" +
+	"\x11AgentRenewRequest\x12\x1b\n" +
+	"\tnode_uuid\x18\x01 \x01(\fR\bnodeUuid\x12\x17\n" +
+	"\acsr_der\x18\x02 \x01(\fR\x06csrDer\x12#\n" +
+	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\"\xbc\x01\n" +
+	"\x13AgentEnrollResponse\x12'\n" +
+	"\x0fcertificate_pem\x18\x01 \x01(\tR\x0ecertificatePem\x12,\n" +
+	"\x12ca_certificate_pem\x18\x02 \x01(\tR\x10caCertificatePem\x12&\n" +
+	"\x0fnot_before_unix\x18\x03 \x01(\x03R\rnotBeforeUnix\x12&\n" +
+	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix\"\xd3\x01\n" +
 	"\x12CollectorSyncHello\x12%\n" +
 	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12-\n" +
 	"\x12registration_token\x18\x02 \x01(\tR\x11registrationToken\x124\n" +
@@ -5520,13 +5920,14 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\n" +
 	"generation\x18\x05 \x01(\x04R\n" +
 	"generation\x12%\n" +
-	"\x0econfig_version\x18\x06 \x01(\x04R\rconfigVersion\"\xf1\x01\n" +
+	"\x0econfig_version\x18\x06 \x01(\x04R\rconfigVersion\"\xaa\x02\n" +
 	"\x1cCollectorAuthorizationConfig\x12%\n" +
 	"\x0econfig_version\x18\x01 \x01(\x04R\rconfigVersion\x12,\n" +
 	"\x12primary_public_key\x18\x02 \x01(\fR\x10primaryPublicKey\x12\x15\n" +
 	"\x06key_id\x18\x03 \x01(\fR\x05keyId\x12,\n" +
 	"\x12revoked_node_uuids\x18\x04 \x03(\fR\x10revokedNodeUuids\x127\n" +
-	"\vassignments\x18\x05 \x03(\v2\x15.proto.NodeAssignmentR\vassignments\"\x86\x01\n" +
+	"\vassignments\x18\x05 \x03(\v2\x15.proto.NodeAssignmentR\vassignments\x127\n" +
+	"\x18agent_ca_certificate_pem\x18\x06 \x01(\tR\x15agentCaCertificatePem\"\x86\x01\n" +
 	"\x14CollectorSyncRequest\x121\n" +
 	"\x05hello\x18\x01 \x01(\v2\x19.proto.CollectorSyncHelloH\x00R\x05hello\x123\n" +
 	"\aruntime\x18\x02 \x01(\v2\x17.proto.CollectorRuntimeH\x00R\aruntimeB\x06\n" +
@@ -5673,11 +6074,15 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"\x12SantaiziNATService\x123\n" +
 	"\tNATStream\x12\x0f.proto.NATFrame\x1a\x0f.proto.NATFrame\"\x00(\x010\x012_\n" +
 	"\x1aSantaiziReplicationService\x12A\n" +
-	"\tReplicate\x12\x17.proto.ReplicationBatch\x1a\x15.proto.ReplicationAck\"\x00(\x010\x012\xfa\x01\n" +
+	"\tReplicate\x12\x17.proto.ReplicationBatch\x1a\x15.proto.ReplicationAck\"\x00(\x010\x012\xcc\x02\n" +
 	"\x18SantaiziCollectorService\x12O\n" +
 	"\bRegister\x12\x1f.proto.RegisterCollectorRequest\x1a .proto.RegisterCollectorResponse\"\x00\x12G\n" +
 	"\x04Sync\x12\x1b.proto.CollectorSyncRequest\x1a\x1c.proto.CollectorSyncResponse\"\x00(\x010\x01\x12D\n" +
-	"\tGetStatus\x12\x1d.proto.CollectorStatusRequest\x1a\x16.proto.CollectorStatus\"\x00B\tZ\a./protob\x06proto3"
+	"\tGetStatus\x12\x1d.proto.CollectorStatusRequest\x1a\x16.proto.CollectorStatus\"\x00\x12P\n" +
+	"\x0eRenewCollector\x12\x1c.proto.CollectorRenewRequest\x1a\x1e.proto.CollectorEnrollResponse\"\x002\x9f\x01\n" +
+	"\x19SantaiziEnrollmentService\x12A\n" +
+	"\x06Enroll\x12\x19.proto.AgentEnrollRequest\x1a\x1a.proto.AgentEnrollResponse\"\x00\x12?\n" +
+	"\x05Renew\x12\x18.proto.AgentRenewRequest\x1a\x1a.proto.AgentEnrollResponse\"\x00B\tZ\a./protob\x06proto3"
 
 var (
 	file_proto_santaizi_proto_rawDescOnce sync.Once
@@ -5692,7 +6097,7 @@ func file_proto_santaizi_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_santaizi_proto_enumTypes = make([]protoimpl.EnumInfo, 11)
-var file_proto_santaizi_proto_msgTypes = make([]protoimpl.MessageInfo, 56)
+var file_proto_santaizi_proto_msgTypes = make([]protoimpl.MessageInfo, 61)
 var file_proto_santaizi_proto_goTypes = []any{
 	(TelemetryEventType)(0),              // 0: proto.TelemetryEventType
 	(TelemetryPriority)(0),               // 1: proto.TelemetryPriority
@@ -5749,18 +6154,23 @@ var file_proto_santaizi_proto_goTypes = []any{
 	(*ReplicationAck)(nil),               // 52: proto.ReplicationAck
 	(*RegisterCollectorRequest)(nil),     // 53: proto.RegisterCollectorRequest
 	(*RegisterCollectorResponse)(nil),    // 54: proto.RegisterCollectorResponse
-	(*CollectorSyncHello)(nil),           // 55: proto.CollectorSyncHello
-	(*NodeAssignment)(nil),               // 56: proto.NodeAssignment
-	(*CollectorAuthorizationConfig)(nil), // 57: proto.CollectorAuthorizationConfig
-	(*CollectorSyncRequest)(nil),         // 58: proto.CollectorSyncRequest
-	(*CollectorSyncResponse)(nil),        // 59: proto.CollectorSyncResponse
-	(*CollectorStatusRequest)(nil),       // 60: proto.CollectorStatusRequest
-	(*CollectorStatus)(nil),              // 61: proto.CollectorStatus
-	(*Host)(nil),                         // 62: proto.Host
-	(*State)(nil),                        // 63: proto.State
-	(*State_SensorTemperature)(nil),      // 64: proto.State_SensorTemperature
-	(*Receipt)(nil),                      // 65: proto.Receipt
-	(*GeoIP)(nil),                        // 66: proto.GeoIP
+	(*CollectorRenewRequest)(nil),        // 55: proto.CollectorRenewRequest
+	(*CollectorEnrollResponse)(nil),      // 56: proto.CollectorEnrollResponse
+	(*AgentEnrollRequest)(nil),           // 57: proto.AgentEnrollRequest
+	(*AgentRenewRequest)(nil),            // 58: proto.AgentRenewRequest
+	(*AgentEnrollResponse)(nil),          // 59: proto.AgentEnrollResponse
+	(*CollectorSyncHello)(nil),           // 60: proto.CollectorSyncHello
+	(*NodeAssignment)(nil),               // 61: proto.NodeAssignment
+	(*CollectorAuthorizationConfig)(nil), // 62: proto.CollectorAuthorizationConfig
+	(*CollectorSyncRequest)(nil),         // 63: proto.CollectorSyncRequest
+	(*CollectorSyncResponse)(nil),        // 64: proto.CollectorSyncResponse
+	(*CollectorStatusRequest)(nil),       // 65: proto.CollectorStatusRequest
+	(*CollectorStatus)(nil),              // 66: proto.CollectorStatus
+	(*Host)(nil),                         // 67: proto.Host
+	(*State)(nil),                        // 68: proto.State
+	(*State_SensorTemperature)(nil),      // 69: proto.State_SensorTemperature
+	(*Receipt)(nil),                      // 70: proto.Receipt
+	(*GeoIP)(nil),                        // 71: proto.GeoIP
 }
 var file_proto_santaizi_proto_depIdxs = []int32{
 	0,  // 0: proto.TelemetryEvent.event_type:type_name -> proto.TelemetryEventType
@@ -5768,15 +6178,15 @@ var file_proto_santaizi_proto_depIdxs = []int32{
 	2,  // 2: proto.TelemetryEvent.source_protocol:type_name -> proto.SourceProtocol
 	3,  // 3: proto.TelemetryEvent.reliability:type_name -> proto.Reliability
 	12, // 4: proto.TelemetryEvent.heartbeat:type_name -> proto.HeartbeatPayload
-	63, // 5: proto.TelemetryEvent.state:type_name -> proto.State
-	62, // 6: proto.TelemetryEvent.host:type_name -> proto.Host
+	68, // 5: proto.TelemetryEvent.state:type_name -> proto.State
+	67, // 6: proto.TelemetryEvent.host:type_name -> proto.Host
 	13, // 7: proto.TelemetryEvent.lifecycle:type_name -> proto.LifecyclePayload
 	14, // 8: proto.TelemetryEvent.state_rollup:type_name -> proto.StateRollupPayload
 	15, // 9: proto.TelemetryEvent.data_loss:type_name -> proto.DataLossPayload
 	5,  // 10: proto.LifecyclePayload.kind:type_name -> proto.LifecycleKind
-	63, // 11: proto.StateRollupPayload.minimum:type_name -> proto.State
-	63, // 12: proto.StateRollupPayload.average:type_name -> proto.State
-	63, // 13: proto.StateRollupPayload.maximum:type_name -> proto.State
+	68, // 11: proto.StateRollupPayload.minimum:type_name -> proto.State
+	68, // 12: proto.StateRollupPayload.average:type_name -> proto.State
+	68, // 13: proto.StateRollupPayload.maximum:type_name -> proto.State
 	4,  // 14: proto.DataLossPayload.reason:type_name -> proto.GapReason
 	4,  // 15: proto.SequenceGap.reason:type_name -> proto.GapReason
 	11, // 16: proto.TelemetryRecord.event:type_name -> proto.TelemetryEvent
@@ -5784,8 +6194,8 @@ var file_proto_santaizi_proto_depIdxs = []int32{
 	18, // 18: proto.TelemetryHello.credential:type_name -> proto.SignedAgentCredential
 	29, // 19: proto.TelemetryHello.agent_runtime:type_name -> proto.AgentRuntime
 	17, // 20: proto.TelemetryBatch.records:type_name -> proto.TelemetryRecord
-	62, // 21: proto.RealtimeSnapshot.host:type_name -> proto.Host
-	63, // 22: proto.RealtimeSnapshot.state:type_name -> proto.State
+	67, // 21: proto.RealtimeSnapshot.host:type_name -> proto.Host
+	68, // 22: proto.RealtimeSnapshot.state:type_name -> proto.State
 	29, // 23: proto.RealtimeSnapshot.agent_runtime:type_name -> proto.AgentRuntime
 	20, // 24: proto.TelemetryRequest.hello:type_name -> proto.TelemetryHello
 	21, // 25: proto.TelemetryRequest.batch:type_name -> proto.TelemetryBatch
@@ -5799,7 +6209,7 @@ var file_proto_santaizi_proto_depIdxs = []int32{
 	8,  // 33: proto.AgentCapabilities.enabled:type_name -> proto.AgentCapability
 	6,  // 34: proto.TelemetryEndpoint.kind:type_name -> proto.EndpointKind
 	31, // 35: proto.EndpointAssignment.endpoints:type_name -> proto.TelemetryEndpoint
-	62, // 36: proto.AgentControlHello.host:type_name -> proto.Host
+	67, // 36: proto.AgentControlHello.host:type_name -> proto.Host
 	30, // 37: proto.AgentControlHello.capabilities:type_name -> proto.AgentCapabilities
 	33, // 38: proto.AgentControlRequest.hello:type_name -> proto.AgentControlHello
 	40, // 39: proto.AgentControlRequest.probe_result:type_name -> proto.ProbeResult
@@ -5825,33 +6235,39 @@ var file_proto_santaizi_proto_depIdxs = []int32{
 	51, // 59: proto.ReplicationBatch.data_loss:type_name -> proto.CollectorDataLossFact
 	4,  // 60: proto.CollectorDataLossFact.reason:type_name -> proto.GapReason
 	49, // 61: proto.CollectorSyncHello.runtime:type_name -> proto.CollectorRuntime
-	56, // 62: proto.CollectorAuthorizationConfig.assignments:type_name -> proto.NodeAssignment
-	55, // 63: proto.CollectorSyncRequest.hello:type_name -> proto.CollectorSyncHello
+	61, // 62: proto.CollectorAuthorizationConfig.assignments:type_name -> proto.NodeAssignment
+	60, // 63: proto.CollectorSyncRequest.hello:type_name -> proto.CollectorSyncHello
 	49, // 64: proto.CollectorSyncRequest.runtime:type_name -> proto.CollectorRuntime
-	57, // 65: proto.CollectorSyncResponse.config:type_name -> proto.CollectorAuthorizationConfig
-	64, // 66: proto.State.temperatures:type_name -> proto.State_SensorTemperature
-	63, // 67: proto.SantaiziService.ReportSystemState:input_type -> proto.State
-	62, // 68: proto.SantaiziService.ReportSystemInfo:input_type -> proto.Host
-	66, // 69: proto.SantaiziService.LookupGeoIP:input_type -> proto.GeoIP
+	62, // 65: proto.CollectorSyncResponse.config:type_name -> proto.CollectorAuthorizationConfig
+	69, // 66: proto.State.temperatures:type_name -> proto.State_SensorTemperature
+	68, // 67: proto.SantaiziService.ReportSystemState:input_type -> proto.State
+	67, // 68: proto.SantaiziService.ReportSystemInfo:input_type -> proto.Host
+	71, // 69: proto.SantaiziService.LookupGeoIP:input_type -> proto.GeoIP
 	25, // 70: proto.SantaiziTelemetryService.Ingest:input_type -> proto.TelemetryRequest
 	34, // 71: proto.SantaiziControlService.Control:input_type -> proto.AgentControlRequest
 	46, // 72: proto.SantaiziNATService.NATStream:input_type -> proto.NATFrame
 	50, // 73: proto.SantaiziReplicationService.Replicate:input_type -> proto.ReplicationBatch
 	53, // 74: proto.SantaiziCollectorService.Register:input_type -> proto.RegisterCollectorRequest
-	58, // 75: proto.SantaiziCollectorService.Sync:input_type -> proto.CollectorSyncRequest
-	60, // 76: proto.SantaiziCollectorService.GetStatus:input_type -> proto.CollectorStatusRequest
-	65, // 77: proto.SantaiziService.ReportSystemState:output_type -> proto.Receipt
-	65, // 78: proto.SantaiziService.ReportSystemInfo:output_type -> proto.Receipt
-	66, // 79: proto.SantaiziService.LookupGeoIP:output_type -> proto.GeoIP
-	27, // 80: proto.SantaiziTelemetryService.Ingest:output_type -> proto.TelemetryResponse
-	35, // 81: proto.SantaiziControlService.Control:output_type -> proto.PrimaryControlResponse
-	46, // 82: proto.SantaiziNATService.NATStream:output_type -> proto.NATFrame
-	52, // 83: proto.SantaiziReplicationService.Replicate:output_type -> proto.ReplicationAck
-	54, // 84: proto.SantaiziCollectorService.Register:output_type -> proto.RegisterCollectorResponse
-	59, // 85: proto.SantaiziCollectorService.Sync:output_type -> proto.CollectorSyncResponse
-	61, // 86: proto.SantaiziCollectorService.GetStatus:output_type -> proto.CollectorStatus
-	77, // [77:87] is the sub-list for method output_type
-	67, // [67:77] is the sub-list for method input_type
+	63, // 75: proto.SantaiziCollectorService.Sync:input_type -> proto.CollectorSyncRequest
+	65, // 76: proto.SantaiziCollectorService.GetStatus:input_type -> proto.CollectorStatusRequest
+	55, // 77: proto.SantaiziCollectorService.RenewCollector:input_type -> proto.CollectorRenewRequest
+	57, // 78: proto.SantaiziEnrollmentService.Enroll:input_type -> proto.AgentEnrollRequest
+	58, // 79: proto.SantaiziEnrollmentService.Renew:input_type -> proto.AgentRenewRequest
+	70, // 80: proto.SantaiziService.ReportSystemState:output_type -> proto.Receipt
+	70, // 81: proto.SantaiziService.ReportSystemInfo:output_type -> proto.Receipt
+	71, // 82: proto.SantaiziService.LookupGeoIP:output_type -> proto.GeoIP
+	27, // 83: proto.SantaiziTelemetryService.Ingest:output_type -> proto.TelemetryResponse
+	35, // 84: proto.SantaiziControlService.Control:output_type -> proto.PrimaryControlResponse
+	46, // 85: proto.SantaiziNATService.NATStream:output_type -> proto.NATFrame
+	52, // 86: proto.SantaiziReplicationService.Replicate:output_type -> proto.ReplicationAck
+	54, // 87: proto.SantaiziCollectorService.Register:output_type -> proto.RegisterCollectorResponse
+	64, // 88: proto.SantaiziCollectorService.Sync:output_type -> proto.CollectorSyncResponse
+	66, // 89: proto.SantaiziCollectorService.GetStatus:output_type -> proto.CollectorStatus
+	56, // 90: proto.SantaiziCollectorService.RenewCollector:output_type -> proto.CollectorEnrollResponse
+	59, // 91: proto.SantaiziEnrollmentService.Enroll:output_type -> proto.AgentEnrollResponse
+	59, // 92: proto.SantaiziEnrollmentService.Renew:output_type -> proto.AgentEnrollResponse
+	80, // [80:93] is the sub-list for method output_type
+	67, // [67:80] is the sub-list for method input_type
 	67, // [67:67] is the sub-list for extension type_name
 	67, // [67:67] is the sub-list for extension extendee
 	0,  // [0:67] is the sub-list for field type_name
@@ -5902,11 +6318,11 @@ func file_proto_santaizi_proto_init() {
 		(*ProbeResult_Icmp)(nil),
 		(*ProbeResult_Tcp)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[47].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[52].OneofWrappers = []any{
 		(*CollectorSyncRequest_Hello)(nil),
 		(*CollectorSyncRequest_Runtime)(nil),
 	}
-	file_proto_santaizi_proto_msgTypes[48].OneofWrappers = []any{
+	file_proto_santaizi_proto_msgTypes[53].OneofWrappers = []any{
 		(*CollectorSyncResponse_Config)(nil),
 		(*CollectorSyncResponse_Accepted)(nil),
 	}
@@ -5916,9 +6332,9 @@ func file_proto_santaizi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_santaizi_proto_rawDesc), len(file_proto_santaizi_proto_rawDesc)),
 			NumEnums:      11,
-			NumMessages:   56,
+			NumMessages:   61,
 			NumExtensions: 0,
-			NumServices:   6,
+			NumServices:   7,
 		},
 		GoTypes:           file_proto_santaizi_proto_goTypes,
 		DependencyIndexes: file_proto_santaizi_proto_depIdxs,
