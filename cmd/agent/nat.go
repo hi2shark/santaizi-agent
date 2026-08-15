@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hi2shark/santaizi-agent/pkg/dialcache"
 	pb "github.com/hi2shark/santaizi-agent/proto"
 	"google.golang.org/grpc"
 )
@@ -34,36 +35,34 @@ func (m *telemetryManager) startNAT(request *pb.NATOpenRequest) error {
 		cancel()
 		return err
 	}
-	rpcConnection, err := grpc.NewClient(agentCliParam.Server, m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, m.legacyAuth)...)
-	if err != nil {
-		_ = target.Close()
-		cancel()
-		return err
-	}
-	stream, err := pb.NewSantaiziNATServiceClient(rpcConnection).NATStream(ctx)
-	if err != nil {
-		_ = rpcConnection.Close()
-		_ = target.Close()
-		cancel()
-		return err
-	}
-	if err := stream.Send(&pb.NATFrame{StreamId: request.GetStreamId(), Kind: pb.NATFrameKind_NAT_FRAME_KIND_OPEN}); err != nil {
-		_ = rpcConnection.Close()
-		_ = target.Close()
-		cancel()
-		return err
-	}
-
-	m.wg.Add(1)
-	go func() {
-		defer m.wg.Done()
-		defer cancel()
-		defer rpcConnection.Close()
-		defer target.Close()
-		if err := relayNAT(ctx, request.GetStreamId(), target, stream); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, io.EOF) {
-			printf("NAT 流 %s 已结束: %v", request.GetStreamId(), err)
+	options := m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, m.legacyAuth, serverNameOf(agentCliParam.Server))
+	err = m.tryDials(ctx, dialcache.PrimaryKey, agentCliParam.Server, options, func(rpcConnection *grpc.ClientConn, attempt *dialAttempt) error {
+		stream, err := pb.NewSantaiziNATServiceClient(rpcConnection).NATStream(ctx)
+		if err != nil {
+			return err
 		}
-	}()
+		if err := stream.Send(&pb.NATFrame{StreamId: request.GetStreamId(), Kind: pb.NATFrameKind_NAT_FRAME_KIND_OPEN}); err != nil {
+			return err
+		}
+		attempt.Remember()
+		attempt.Detach()
+		m.wg.Add(1)
+		go func() {
+			defer m.wg.Done()
+			defer cancel()
+			defer rpcConnection.Close()
+			defer target.Close()
+			if err := relayNAT(ctx, request.GetStreamId(), target, stream); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, io.EOF) {
+				printf("NAT 流 %s 已结束: %v", request.GetStreamId(), err)
+			}
+		}()
+		return nil
+	})
+	if err != nil {
+		_ = target.Close()
+		cancel()
+		return err
+	}
 	return nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/hi2shark/santaizi-agent/model"
+	"github.com/hi2shark/santaizi-agent/pkg/dialcache"
 )
 
 func resetAgentState() {
@@ -22,7 +23,7 @@ func TestServiceRuntimeArgumentsOnlyIncludeConfig(t *testing.T) {
 		t.Fatalf("args=%v", args)
 	}
 	joined := " " + strings.Join(args, " ") + " "
-	for _, forbidden := range []string{"test-client-secret", " -p ", " -s ", " --tls ", " --disable-nat ", " --data-dir "} {
+	for _, forbidden := range []string{"test-client-secret", " -p ", " -s ", " --tls ", " --disable-nat ", " --data-dir ", " --server-ip "} {
 		if strings.Contains(joined, forbidden) {
 			t.Fatalf("service arguments leaked %q: %v", forbidden, args)
 		}
@@ -63,8 +64,64 @@ func TestPersistRuntimeConfigWritesSecretAndKeepsServiceArgsClean(t *testing.T) 
 	}
 	args := serviceRuntimeArguments(path)
 	joined := strings.Join(args, " ")
-	if strings.Contains(joined, "test-client-secret") || strings.Contains(joined, "-p") || strings.Contains(joined, "-s") {
+	if strings.Contains(joined, "test-client-secret") || strings.Contains(joined, "-p") || strings.Contains(joined, "-s") || strings.Contains(joined, "server-ip") {
 		t.Fatalf("service arguments=%v", args)
+	}
+}
+
+func TestSeedPrimaryServerIPsWritesCacheNotYAML(t *testing.T) {
+	t.Cleanup(resetAgentState)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "agent.yaml")
+	dataDir := filepath.Join(dir, "data")
+	if err := agentConfig.Read(path); err != nil {
+		t.Fatal(err)
+	}
+	agentCliParam = AgentCliParam{
+		Server:       "grpc.example.invalid:5555",
+		ClientSecret: "test-client-secret",
+		ConfigPath:   path,
+		DataDir:      dataDir,
+		ReportDelay:  5,
+		ServerIPs:    []string{"192.0.2.10", "198.51.100.4"},
+	}
+	if err := persistRuntimeConfig(); err != nil {
+		t.Fatal(err)
+	}
+	text, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(text), "192.0.2.10") || strings.Contains(string(text), "server-ip") || strings.Contains(string(text), "server_ip") {
+		t.Fatalf("yaml should not store hint IPs:\n%s", text)
+	}
+	if err := seedPrimaryServerIPs(dataDir, agentCliParam.Server, agentCliParam.ServerIPs); err != nil {
+		t.Fatal(err)
+	}
+	store, err := dialcache.Open(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := store.Get(dialcache.PrimaryKey, "grpc.example.invalid", "5555")
+	if len(got) != 2 || got[0] != "192.0.2.10" || got[1] != "198.51.100.4" {
+		t.Fatalf("seeded=%v", got)
+	}
+}
+
+func TestSeedPrimaryServerIPsRejectsInvalid(t *testing.T) {
+	err := seedPrimaryServerIPs(t.TempDir(), "grpc.example.invalid:5555", []string{"not-an-ip"})
+	if err == nil {
+		t.Fatal("expected invalid IP")
+	}
+}
+
+func TestSeedPrimaryServerIPsSkipsLiteralServer(t *testing.T) {
+	dir := t.TempDir()
+	if err := seedPrimaryServerIPs(dir, "192.0.2.10:5555", []string{"198.51.100.4"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "endpoint-cache.json")); !os.IsNotExist(err) {
+		t.Fatalf("literal server should not write cache: %v", err)
 	}
 }
 

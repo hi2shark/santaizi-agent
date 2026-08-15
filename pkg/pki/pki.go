@@ -218,6 +218,7 @@ func (s *Store) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certific
 type ClientTLSOptions struct {
 	CAFile               string
 	ExtraCAPEM           []byte
+	ServerName           string
 	InsecureSkipVerify   bool
 	GetClientCertificate func(*tls.CertificateRequestInfo) (*tls.Certificate, error)
 }
@@ -241,6 +242,7 @@ func NewClientTLSConfig(opts ClientTLSOptions) (*tls.Config, error) {
 	}
 	return &tls.Config{
 		MinVersion:           tls.VersionTLS12,
+		ServerName:           opts.ServerName,
 		RootCAs:              roots,
 		InsecureSkipVerify:   opts.InsecureSkipVerify, //nolint:gosec
 		GetClientCertificate: opts.GetClientCertificate,

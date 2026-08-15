@@ -73,6 +73,10 @@ func serviceActions(cmd *cobra.Command, args []string) {
 			log.Printf("写入配置文件失败: %v", err)
 			os.Exit(1)
 		}
+		if err := seedPrimaryServerIPs(agentCliParam.DataDir, agentCliParam.Server, agentCliParam.ServerIPs); err != nil {
+			log.Printf("写入主端拨号缓存失败: %v", err)
+			os.Exit(1)
+		}
 		flags = serviceRuntimeArguments(agentCliParam.ConfigPath)
 	}
 	if err := runService(action, flags); err != nil && action != "" {

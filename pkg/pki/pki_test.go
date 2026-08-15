@@ -96,6 +96,16 @@ func TestNewClientTLSConfigKeepsSystemRoots(t *testing.T) {
 	}
 }
 
+func TestNewClientTLSConfigSetsServerName(t *testing.T) {
+	cfg, err := NewClientTLSConfig(ClientTLSOptions{ServerName: "grpc.example.invalid"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.ServerName != "grpc.example.invalid" {
+		t.Fatalf("server name = %q", cfg.ServerName)
+	}
+}
+
 const tlsVersion12 = 0x0303
 
 func selfSignedClientCert(t *testing.T, key ed25519.PrivateKey) []byte {

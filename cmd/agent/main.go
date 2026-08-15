@@ -52,6 +52,7 @@ type AgentCliParam struct {
 	CountryCode        string
 	ConfigPath         string
 	DataDir            string
+	ServerIPs          []string
 }
 
 var (
@@ -98,6 +99,7 @@ func init() {
 	}
 
 	agentCmd.PersistentFlags().StringVarP(&agentCliParam.Server, "server", "s", "localhost:5555", "管理面板 RPC 地址")
+	agentCmd.PersistentFlags().StringArrayVar(&agentCliParam.ServerIPs, "server-ip", nil, "安装时预缓存的主端 IP，运行时以 DNS 为准")
 	agentCmd.PersistentFlags().StringVarP(&agentCliParam.ClientSecret, "password", "p", "", "探针连接密钥")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.TLS, "tls", false, "启用 TLS")
 	agentCmd.PersistentFlags().BoolVarP(&agentCliParam.InsecureTLS, "insecure", "k", false, "跳过 TLS 证书校验")

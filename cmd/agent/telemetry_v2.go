@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/hi2shark/santaizi-agent/model"
+	"github.com/hi2shark/santaizi-agent/pkg/dialcache"
 	"github.com/hi2shark/santaizi-agent/pkg/identity"
 	"github.com/hi2shark/santaizi-agent/pkg/monitor"
 	"github.com/hi2shark/santaizi-agent/pkg/pki"
@@ -67,6 +68,7 @@ type telemetryManager struct {
 	closing      bool
 	rollup       *pressureStateRollup
 	pkiStore     *pki.Store
+	dialCache    *dialcache.Store
 	legacyAuth   bool
 	renewBackoff time.Duration
 	nextRenew    time.Time
@@ -106,11 +108,16 @@ func startV2Telemetry(parent context.Context, auth model.AuthHandler) (*telemetr
 		_ = journal.Close()
 		return nil, err
 	}
+	cache, err := dialcache.Open(dataDir)
+	if err != nil {
+		_ = journal.Close()
+		return nil, err
+	}
 	ctx, cancel := context.WithCancel(parent)
 	m := &telemetryManager{
 		ctx: ctx, cancel: cancel, auth: auth, nodeID: nodeID, session: session,
 		started: time.Now(), wal: journal, state: state, workers: make(map[string]*endpointWorker),
-		sinkRuntime: make(map[string]*pb.SinkRuntime), pkiStore: pkiStore,
+		sinkRuntime: make(map[string]*pb.SinkRuntime), pkiStore: pkiStore, dialCache: cache,
 	}
 	if credential, err := readCredential(filepath.Join(dataDir, "credential.pb")); err == nil {
 		m.credential = credential
@@ -574,12 +581,13 @@ func (m *telemetryManager) controlOnce() error {
 	if err := m.ensureDeviceCredentials(); err != nil {
 		return err
 	}
-	options := m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, m.legacyAuth)
-	conn, err := grpc.NewClient(agentCliParam.Server, options...)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
+	options := m.dialOptions(agentCliParam.TLS, agentCliParam.InsecureTLS, m.legacyAuth, serverNameOf(agentCliParam.Server))
+	return m.tryDials(m.ctx, dialcache.PrimaryKey, agentCliParam.Server, options, func(conn *grpc.ClientConn, attempt *dialAttempt) error {
+		return m.controlOnConn(conn, attempt)
+	})
+}
+
+func (m *telemetryManager) controlOnConn(conn *grpc.ClientConn, attempt *dialAttempt) error {
 	stream, err := pb.NewSantaiziControlServiceClient(conn).Control(m.ctx)
 	if err != nil {
 		return err
@@ -597,6 +605,7 @@ func (m *telemetryManager) controlOnce() error {
 	}}}); err != nil {
 		return err
 	}
+	attempt.Remember()
 	recv := make(chan *pb.PrimaryControlResponse)
 	recvErr := make(chan error, 1)
 	asyncErr := make(chan error, 1)
@@ -774,11 +783,18 @@ func (m *telemetryManager) sinkLoop(ctx context.Context, worker *endpointWorker)
 
 func (m *telemetryManager) sinkOnce(ctx context.Context, worker *endpointWorker) error {
 	endpoint := worker.endpoint
-	conn, err := grpc.NewClient(endpoint.GetAddress(), m.dialOptions(endpoint.GetTls(), endpoint.GetInsecureTls(), false)...)
-	if err != nil {
-		return err
+	key := dialcache.CollectorKey(endpoint.GetEndpointId())
+	if endpoint.GetKind() == pb.EndpointKind_ENDPOINT_KIND_PRIMARY {
+		key = dialcache.PrimaryKey
 	}
-	defer conn.Close()
+	options := m.dialOptions(endpoint.GetTls(), endpoint.GetInsecureTls(), false, serverNameOf(endpoint.GetAddress()))
+	return m.tryDials(ctx, key, endpoint.GetAddress(), options, func(conn *grpc.ClientConn, attempt *dialAttempt) error {
+		return m.sinkOnConn(ctx, worker, conn, attempt)
+	})
+}
+
+func (m *telemetryManager) sinkOnConn(ctx context.Context, worker *endpointWorker, conn *grpc.ClientConn, attempt *dialAttempt) error {
+	endpoint := worker.endpoint
 	stream, err := pb.NewSantaiziTelemetryServiceClient(conn).Ingest(ctx)
 	if err != nil {
 		return err
@@ -792,6 +808,7 @@ func (m *telemetryManager) sinkOnce(ctx context.Context, worker *endpointWorker)
 	}}}); err != nil {
 		return err
 	}
+	attempt.Remember()
 	m.setSinkConnected(endpoint, true)
 	defer m.setSinkConnected(endpoint, false)
 	ticker := time.NewTicker(time.Second)
@@ -1120,17 +1137,18 @@ func (m *telemetryManager) setSinkError(endpoint *pb.TelemetryEndpoint, err erro
 	}
 }
 
-func (m *telemetryManager) dialOptions(useTLS, insecureTLS, withAuth bool) []grpc.DialOption {
+func (m *telemetryManager) dialOptions(useTLS, insecureTLS, withAuth bool, serverName string) []grpc.DialOption {
 	var transport grpc.DialOption
 	if useTLS {
 		tlsCfg, err := pki.NewClientTLSConfig(pki.ClientTLSOptions{
 			CAFile:               agentConfig.TLSCAFile,
 			ExtraCAPEM:           m.pkiCAPEM(),
+			ServerName:           serverName,
 			InsecureSkipVerify:   insecureTLS,
 			GetClientCertificate: m.pkiGetClientCertificate(),
 		})
 		if err != nil {
-			tlsCfg = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: insecureTLS}
+			tlsCfg = &tls.Config{MinVersion: tls.VersionTLS12, ServerName: serverName, InsecureSkipVerify: insecureTLS}
 		}
 		transport = grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg))
 	} else {
@@ -1216,6 +1234,7 @@ func (m *telemetryManager) ensureDeviceCredentials() error {
 func (m *telemetryManager) enrollmentDialOptions() ([]grpc.DialOption, error) {
 	tlsCfg, err := pki.NewClientTLSConfig(pki.ClientTLSOptions{
 		CAFile:             agentConfig.TLSCAFile,
+		ServerName:         serverNameOf(agentCliParam.Server),
 		InsecureSkipVerify: agentCliParam.InsecureTLS,
 	})
 	if err != nil {
@@ -1240,18 +1259,16 @@ func (m *telemetryManager) enrollDeviceCertificate() error {
 	if err != nil {
 		return err
 	}
-	conn, err := grpc.NewClient(agentCliParam.Server, options...)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	response, err := pb.NewSantaiziEnrollmentServiceClient(conn).Enroll(m.ctx, &pb.AgentEnrollRequest{
-		NodeUuid: m.nodeID[:], CsrDer: csr, AgentVersion: version,
+	return m.tryDials(m.ctx, dialcache.PrimaryKey, agentCliParam.Server, options, func(conn *grpc.ClientConn, attempt *dialAttempt) error {
+		response, err := pb.NewSantaiziEnrollmentServiceClient(conn).Enroll(m.ctx, &pb.AgentEnrollRequest{
+			NodeUuid: m.nodeID[:], CsrDer: csr, AgentVersion: version,
+		})
+		if err != nil {
+			return err
+		}
+		attempt.Remember()
+		return m.saveIssuedCertificate(key, response.GetCertificatePem(), response.GetCaCertificatePem())
 	})
-	if err != nil {
-		return err
-	}
-	return m.saveIssuedCertificate(key, response.GetCertificatePem(), response.GetCaCertificatePem())
 }
 
 func (m *telemetryManager) renewDeviceCertificate() error {
@@ -1263,19 +1280,17 @@ func (m *telemetryManager) renewDeviceCertificate() error {
 	if err != nil {
 		return err
 	}
-	options := m.dialOptions(true, agentCliParam.InsecureTLS, false)
-	conn, err := grpc.NewClient(agentCliParam.Server, options...)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	response, err := pb.NewSantaiziEnrollmentServiceClient(conn).Renew(m.ctx, &pb.AgentRenewRequest{
-		NodeUuid: m.nodeID[:], CsrDer: csr, AgentVersion: version,
+	options := m.dialOptions(true, agentCliParam.InsecureTLS, false, serverNameOf(agentCliParam.Server))
+	return m.tryDials(m.ctx, dialcache.PrimaryKey, agentCliParam.Server, options, func(conn *grpc.ClientConn, attempt *dialAttempt) error {
+		response, err := pb.NewSantaiziEnrollmentServiceClient(conn).Renew(m.ctx, &pb.AgentRenewRequest{
+			NodeUuid: m.nodeID[:], CsrDer: csr, AgentVersion: version,
+		})
+		if err != nil {
+			return err
+		}
+		attempt.Remember()
+		return m.saveIssuedCertificate(key, response.GetCertificatePem(), response.GetCaCertificatePem())
 	})
-	if err != nil {
-		return err
-	}
-	return m.saveIssuedCertificate(key, response.GetCertificatePem(), response.GetCaCertificatePem())
 }
 
 func (m *telemetryManager) saveIssuedCertificate(key ed25519.PrivateKey, certPEM, caPEM string) error {
