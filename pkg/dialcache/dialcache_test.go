@@ -104,6 +104,9 @@ func TestPlanLiteralIPSkipsCache(t *testing.T) {
 	if targets[0].FromDNS || targets[0].IP != "192.0.2.10" || targets[0].DialAddr != "192.0.2.10:5555" {
 		t.Fatalf("literal = %#v", targets[0])
 	}
+	if targets[0].Authority != "192.0.2.10" || targets[0].ServerName != "192.0.2.10" {
+		t.Fatalf("literal authority = %#v", targets[0])
+	}
 }
 
 func TestPlanPrefersDNSThenCache(t *testing.T) {
@@ -128,6 +131,11 @@ func TestPlanPrefersDNSThenCache(t *testing.T) {
 	}
 	if targets[1].FromDNS || targets[1].IP != "198.51.100.4" {
 		t.Fatalf("cache second = %#v", targets[1])
+	}
+	for i, target := range targets {
+		if target.Authority != "grpc.example.invalid" || target.ServerName != "grpc.example.invalid" {
+			t.Fatalf("target[%d] authority = %#v", i, target)
+		}
 	}
 }
 
@@ -184,6 +192,16 @@ func TestOpenIgnoresCorruptFile(t *testing.T) {
 	}
 	if err := json.Unmarshal(raw, &loaded); err != nil || loaded.Endpoints[PrimaryKey].IPs[0] != "192.0.2.10" {
 		t.Fatalf("rewritten=%s err=%v", raw, err)
+	}
+}
+
+func TestPlanIPv6LiteralAuthorityOmitsPort(t *testing.T) {
+	targets, err := Plan(context.Background(), nil, PrimaryKey, "[2001:db8::10]:5555")
+	if err != nil || len(targets) != 1 {
+		t.Fatalf("targets=%v err=%v", targets, err)
+	}
+	if targets[0].DialAddr != "[2001:db8::10]:5555" || targets[0].Authority != "2001:db8::10" || targets[0].ServerName != "2001:db8::10" {
+		t.Fatalf("ipv6 = %#v", targets[0])
 	}
 }
 

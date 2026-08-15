@@ -130,11 +130,11 @@ func Plan(ctx context.Context, store *Store, key, address string) ([]Target, err
 	if err != nil {
 		return nil, err
 	}
-	authority := net.JoinHostPort(host, port)
+	// grpc-go requires WithAuthority == tls.Config.ServerName; neither may include :port.
 	if parsed := net.ParseIP(host); parsed != nil {
 		ip := parsed.String()
 		return []Target{{
-			DialAddr: authority, Authority: authority, ServerName: host,
+			DialAddr: net.JoinHostPort(ip, port), Authority: host, ServerName: host,
 			Host: host, Port: port, IP: ip,
 		}}, nil
 	}
@@ -144,7 +144,7 @@ func Plan(ctx context.Context, store *Store, key, address string) ([]Target, err
 		for _, ip := range ips {
 			seen[ip] = true
 			targets = append(targets, Target{
-				DialAddr: net.JoinHostPort(ip, port), Authority: authority, ServerName: host,
+				DialAddr: net.JoinHostPort(ip, port), Authority: host, ServerName: host,
 				Host: host, Port: port, IP: ip, FromDNS: true,
 			})
 		}
@@ -157,7 +157,7 @@ func Plan(ctx context.Context, store *Store, key, address string) ([]Target, err
 		}
 		seen[ip] = true
 		targets = append(targets, Target{
-			DialAddr: net.JoinHostPort(ip, port), Authority: authority, ServerName: host,
+			DialAddr: net.JoinHostPort(ip, port), Authority: host, ServerName: host,
 			Host: host, Port: port, IP: ip,
 		})
 	}

@@ -42,7 +42,7 @@ func (m *telemetryManager) tryDials(ctx context.Context, key, address string, op
 	}
 	var lastErr error
 	for _, target := range targets {
-		opts := append(append([]grpc.DialOption{}, options...), grpc.WithAuthority(target.Authority))
+		opts := append(append([]grpc.DialOption{}, options...), grpc.WithAuthority(target.Authority)) // must equal TLS ServerName, no :port
 		conn, dialErr := grpc.NewClient(target.DialAddr, opts...)
 		if dialErr != nil {
 			lastErr = dialErr
