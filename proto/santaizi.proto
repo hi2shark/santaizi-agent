@@ -74,6 +74,12 @@ enum GapReason {
     GAP_REASON_CORRUPTION = 3;
 }
 
+enum CollectorKind {
+    COLLECTOR_KIND_UNSPECIFIED = 0;
+    COLLECTOR_KIND_OBSERVER = 1;
+    COLLECTOR_KIND_PROBE = 2;
+}
+
 enum LifecycleKind {
     LIFECYCLE_KIND_UNSPECIFIED = 0;
     LIFECYCLE_KIND_AGENT_STARTED = 1;
@@ -539,6 +545,79 @@ message NodeAssignment {
     uint64 config_version = 6;
 }
 
+message ProbeTarget {
+    uint64 server_id = 1;
+    string server_name = 2;
+    string ipv4 = 3;
+    string ipv6 = 4;
+    string hostname = 5;
+    repeated uint32 tcp_ports = 6;
+    bool enable_icmp = 7;
+    bool enable_tcp = 8;
+    bool enable_mtr = 9;
+    uint32 interval_seconds = 10;
+    uint32 mtr_interval_seconds = 11;
+}
+
+message ProbeConfig {
+    CollectorKind kind = 1;
+    uint32 interval_seconds = 2;
+    uint32 mtr_interval_seconds = 3;
+    repeated uint32 tcp_ports = 4;
+    bool enable_icmp = 5;
+    bool enable_tcp = 6;
+    bool enable_mtr = 7;
+    bool notify = 8;
+    string notification_tag = 9;
+    bool latency_notify = 10;
+    double min_latency_ms = 11;
+    double max_latency_ms = 12;
+    uint32 fail_threshold = 13;
+}
+
+message ProbeICMPSample {
+    bool ok = 1;
+    double rtt_ms = 2;
+    double loss = 3;
+    uint32 packets_sent = 4;
+    uint32 packets_received = 5;
+    string error = 6;
+}
+
+message ProbeTCPSample {
+    uint32 port = 1;
+    bool ok = 2;
+    double rtt_ms = 3;
+    string error = 4;
+}
+
+message ProbeMTRHop {
+    uint32 ttl = 1;
+    string address = 2;
+    double loss = 3;
+    double avg_ms = 4;
+    uint32 sent = 5;
+}
+
+message ProbeMTRTrace {
+    int64 sampled_at_unix_nano = 1;
+    string destination = 2;
+    repeated ProbeMTRHop hops = 3;
+}
+
+message ProbeSample {
+    uint64 server_id = 1;
+    int64 sampled_at_unix_nano = 2;
+    ProbeICMPSample icmp = 3;
+    repeated ProbeTCPSample tcp = 4;
+    ProbeMTRTrace mtr = 5;
+    string last_error = 6;
+}
+
+message ProbeSampleBatch {
+    repeated ProbeSample samples = 1;
+}
+
 message CollectorAuthorizationConfig {
     uint64 config_version = 1;
     bytes primary_public_key = 2;
@@ -546,12 +625,16 @@ message CollectorAuthorizationConfig {
     repeated bytes revoked_node_uuids = 4;
     repeated NodeAssignment assignments = 5;
     string agent_ca_certificate_pem = 6;
+    CollectorKind kind = 7;
+    ProbeConfig probe = 8;
+    repeated ProbeTarget targets = 9;
 }
 
 message CollectorSyncRequest {
     oneof body {
         CollectorSyncHello hello = 1;
         CollectorRuntime runtime = 2;
+        ProbeSampleBatch probe_samples = 3;
     }
 }
 
