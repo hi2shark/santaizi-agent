@@ -3671,6 +3671,7 @@ type CollectorRuntime struct {
 	HeartbeatRttSampledAtUnixNano   int64                  `protobuf:"varint,11,opt,name=heartbeat_rtt_sampled_at_unix_nano,json=heartbeatRttSampledAtUnixNano,proto3" json:"heartbeat_rtt_sampled_at_unix_nano,omitempty"`
 	ReplicationRttMs                float64                `protobuf:"fixed64,12,opt,name=replication_rtt_ms,json=replicationRttMs,proto3" json:"replication_rtt_ms,omitempty"`
 	ReplicationRttSampledAtUnixNano int64                  `protobuf:"varint,13,opt,name=replication_rtt_sampled_at_unix_nano,json=replicationRttSampledAtUnixNano,proto3" json:"replication_rtt_sampled_at_unix_nano,omitempty"`
+	SoftwareVersion                 string                 `protobuf:"bytes,14,opt,name=software_version,json=softwareVersion,proto3" json:"software_version,omitempty"`
 	unknownFields                   protoimpl.UnknownFields
 	sizeCache                       protoimpl.SizeCache
 }
@@ -3794,6 +3795,13 @@ func (x *CollectorRuntime) GetReplicationRttSampledAtUnixNano() int64 {
 		return x.ReplicationRttSampledAtUnixNano
 	}
 	return 0
+}
+
+func (x *CollectorRuntime) GetSoftwareVersion() string {
+	if x != nil {
+		return x.SoftwareVersion
+	}
+	return ""
 }
 
 type ReplicationBatch struct {
@@ -5826,7 +5834,7 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	"observerId\x12/\n" +
 	"\x14sampled_at_unix_nano\x18\x02 \x01(\x03R\x11sampledAtUnixNano\x12\x18\n" +
 	"\ahealthy\x18\x03 \x01(\bR\ahealthy\x12'\n" +
-	"\x0fprocess_session\x18\x04 \x01(\tR\x0eprocessSession\"\xa0\x05\n" +
+	"\x0fprocess_session\x18\x04 \x01(\tR\x0eprocessSession\"\xcb\x05\n" +
 	"\x10CollectorRuntime\x12%\n" +
 	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12/\n" +
 	"\x14sampled_at_unix_nano\x18\x02 \x01(\x03R\x11sampledAtUnixNano\x12\x1d\n" +
@@ -5842,7 +5850,8 @@ const file_proto_santaizi_proto_rawDesc = "" +
 	" \x01(\x01R\x0eheartbeatRttMs\x12I\n" +
 	"\"heartbeat_rtt_sampled_at_unix_nano\x18\v \x01(\x03R\x1dheartbeatRttSampledAtUnixNano\x12,\n" +
 	"\x12replication_rtt_ms\x18\f \x01(\x01R\x10replicationRttMs\x12M\n" +
-	"$replication_rtt_sampled_at_unix_nano\x18\r \x01(\x03R\x1freplicationRttSampledAtUnixNano\"\xf6\x03\n" +
+	"$replication_rtt_sampled_at_unix_nano\x18\r \x01(\x03R\x1freplicationRttSampledAtUnixNano\x12)\n" +
+	"\x10software_version\x18\x0e \x01(\tR\x0fsoftwareVersion\"\xf6\x03\n" +
 	"\x10ReplicationBatch\x12%\n" +
 	"\x0ecollector_uuid\x18\x01 \x01(\tR\rcollectorUuid\x12/\n" +
 	"\x13replication_session\x18\x02 \x01(\fR\x12replicationSession\x12%\n" +

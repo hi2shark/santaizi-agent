@@ -438,6 +438,7 @@ message CollectorRuntime {
     int64 heartbeat_rtt_sampled_at_unix_nano = 11;
     double replication_rtt_ms = 12;
     int64 replication_rtt_sampled_at_unix_nano = 13;
+    string software_version = 14;
 }
 
 message ReplicationBatch {
