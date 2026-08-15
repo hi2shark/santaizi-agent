@@ -809,7 +809,6 @@ func (m *telemetryManager) sinkOnConn(ctx context.Context, worker *endpointWorke
 		return err
 	}
 	attempt.Remember()
-	m.setSinkConnected(endpoint, true)
 	defer m.setSinkConnected(endpoint, false)
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
@@ -891,6 +890,7 @@ func (m *telemetryManager) maybePingSink(stream grpc.BidiStreamingClient[pb.Tele
 
 func (m *telemetryManager) recordSinkRTT(worker *endpointWorker, rtt time.Duration) {
 	worker.lastRTTAt = time.Now()
+	m.setSinkConnected(worker.endpoint, true)
 	m.setSinkRTT(worker.endpoint, rtt)
 }
 
@@ -1107,6 +1107,9 @@ func (m *telemetryManager) setSinkConnected(endpoint *pb.TelemetryEndpoint, conn
 		runtime.Connected = connected
 		if connected {
 			runtime.LastError = ""
+		} else {
+			runtime.LastRttMs = 0
+			runtime.RttSampledAtUnixNano = 0
 		}
 	}
 }
@@ -1134,6 +1137,8 @@ func (m *telemetryManager) setSinkError(endpoint *pb.TelemetryEndpoint, err erro
 	if runtime := m.sinkRuntime[endpoint.GetEndpointId()]; runtime != nil {
 		runtime.Connected = false
 		runtime.LastError = err.Error()
+		runtime.LastRttMs = 0
+		runtime.RttSampledAtUnixNano = 0
 	}
 }
 

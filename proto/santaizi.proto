@@ -559,6 +559,12 @@ message ProbeTarget {
     uint32 mtr_interval_seconds = 11;
 }
 
+enum ProbeIPFamily {
+    PROBE_IP_FAMILY_UNSPECIFIED = 0;
+    PROBE_IP_FAMILY_IPV4 = 1;
+    PROBE_IP_FAMILY_IPV6 = 2;
+}
+
 message ProbeConfig {
     CollectorKind kind = 1;
     uint32 interval_seconds = 2;
@@ -573,6 +579,7 @@ message ProbeConfig {
     double min_latency_ms = 11;
     double max_latency_ms = 12;
     uint32 fail_threshold = 13;
+    repeated ProbeIPFamily ip_families = 14;
 }
 
 message ProbeICMPSample {

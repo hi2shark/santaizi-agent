@@ -66,6 +66,40 @@ func TestSetSinkRTTRecordsSample(t *testing.T) {
 	}
 }
 
+func TestRecordSinkRTTMarksConnected(t *testing.T) {
+	manager := &telemetryManager{sinkRuntime: map[string]*pb.SinkRuntime{
+		"primary": {EndpointId: "primary", Generation: 1},
+	}}
+	worker := &endpointWorker{endpoint: &pb.TelemetryEndpoint{EndpointId: "primary", Generation: 1}}
+	manager.recordSinkRTT(worker, 12*time.Millisecond)
+	got := manager.sinkRuntime["primary"]
+	if !got.GetConnected() || got.GetLastRttMs() < 11.9 {
+		t.Fatalf("first successful recv should handshake: %#v", got)
+	}
+}
+
+func TestSetSinkConnectedFalseClearsRTT(t *testing.T) {
+	manager := &telemetryManager{sinkRuntime: map[string]*pb.SinkRuntime{
+		"primary": {EndpointId: "primary", Generation: 1, Connected: true, LastRttMs: 12, RttSampledAtUnixNano: 9},
+	}}
+	manager.setSinkConnected(&pb.TelemetryEndpoint{EndpointId: "primary", Generation: 1}, false)
+	got := manager.sinkRuntime["primary"]
+	if got.GetConnected() || got.GetLastRttMs() != 0 || got.GetRttSampledAtUnixNano() != 0 {
+		t.Fatalf("disconnect should clear RTT: %#v", got)
+	}
+}
+
+func TestSetSinkErrorClearsRTT(t *testing.T) {
+	manager := &telemetryManager{sinkRuntime: map[string]*pb.SinkRuntime{
+		"primary": {EndpointId: "primary", Generation: 1, Connected: true, LastRttMs: 12, RttSampledAtUnixNano: 9},
+	}}
+	manager.setSinkError(&pb.TelemetryEndpoint{EndpointId: "primary", Generation: 1}, io.EOF)
+	got := manager.sinkRuntime["primary"]
+	if got.GetConnected() || got.GetLastRttMs() != 0 || got.GetRttSampledAtUnixNano() != 0 || got.GetLastError() == "" {
+		t.Fatalf("error should clear RTT: %#v", got)
+	}
+}
+
 func TestPingUnsupportedDetectsInvalidArgument(t *testing.T) {
 	if !pingUnsupported(status.Error(codes.InvalidArgument, "unexpected telemetry request")) {
 		t.Fatal("invalid argument should disable ping")
